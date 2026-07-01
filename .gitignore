@@ -37,7 +37,6 @@ check_icon.py
 
 # CI tool output
 analysis_output.json
-tools/ai_config.json
 
 # Build artifacts
 *.dmg

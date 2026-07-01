@@ -1,0 +1,118 @@
+name: Weekly Release
+
+on:
+  schedule:
+    - cron: '0 12 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.version }}
+      created: ${{ steps.bump.outputs.created }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          VERSION=$(cat VERSION | tr -d '\n\r')
+          echo "Current version: $VERSION"
+          IFS='.' read -r major minor patch <<< "$VERSION"
+          patch=$((patch + 1))
+          NEW_VERSION="${major}.${minor}.${patch}"
+          echo "New version: $NEW_VERSION"
+          echo "$NEW_VERSION" > VERSION
+          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          
+          # Update config.json version
+          if [ -f config.json ]; then
+            python3 -c "
+import json
+with open('config.json') as f:
+    c = json.load(f)
+c['version'] = '$NEW_VERSION'
+with open('config.json', 'w') as f:
+    json.dump(c, f, indent=2)
+"
+          fi
+          
+          git config user.name "SoundVault Bot"
+          git config user.email "bot@soundvault.app"
+          git add VERSION config.json
+          git commit -m "Weekly bump to v$NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin "v$NEW_VERSION"
+          echo "created=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.created == 'true'
+        run: |
+          VERSION="${{ steps.bump.outputs.version }}"
+          gh release create "v$VERSION" \
+            --title "SoundVault v$VERSION" \
+            --notes "Weekly release v$VERSION — includes latest fixes and improvements." \
+            --generate-notes
+
+  build:
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          python -m PyInstaller SoundVault.spec --noconfirm
+
+      - name: Build NSIS installer (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install nsis -y
+          & "C:\Program Files (x86)\NSIS\Bin\makensis.exe" installer/installer.nsi
+          Copy-Item -Path "installer/SoundVault_Setup.exe" -Destination "dist/" -Force
+
+      - name: Build .dmg (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          bash scripts/build-macos-pkg.sh "${{ needs.release.outputs.version }}"
+
+      - name: Build .AppImage (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fuse libfuse2
+          bash scripts/build-linux.sh "${{ needs.release.outputs.version }}"
+
+      - name: Upload artifacts to release
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          gh release upload "v$VERSION" dist/* --clobber
+        shell: bash
