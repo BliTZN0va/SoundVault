@@ -1,0 +1,111 @@
+name: Build All Platforms
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: python -m PyInstaller SoundVault.spec
+
+      - name: Build NSIS installer (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          if (Get-Command makensis -ErrorAction SilentlyContinue) {
+            makensis installer/installer.nsi
+            Copy-Item installer/SoundVault_Setup.exe dist/
+          } else {
+            Write-Host "NSIS not available, skipping NSIS installer"
+          }
+
+      - name: Build MSI installer (Windows)
+        if: runner.os == 'Windows'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          if (Get-Command candle -ErrorAction SilentlyContinue) {
+            candle installer/installer.wxs -o installer/installer.wixobj
+            light installer/installer.wixobj -o dist/SoundVault.msi
+          } else {
+            Write-Host "WiX not available, skipping MSI installer"
+          }
+
+      - name: Build .dmg (macOS)
+        if: runner.os == 'macOS'
+        continue-on-error: true
+        shell: bash
+        run: |
+          chmod +x scripts/build-macos.sh
+          bash scripts/build-macos.sh
+
+      - name: Build .AppImage (Linux)
+        if: runner.os == 'Linux'
+        continue-on-error: true
+        shell: bash
+        run: |
+          chmod +x scripts/build-linux.sh
+          bash scripts/build-linux.sh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoundVault-${{ runner.os }}-${{ github.ref_name }}
+          path: dist/
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist/
+
+      - name: Generate release notes
+        id: notes
+        run: |
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          echo "## SoundVault ${{ github.ref_name }}" >> $GITHUB_ENV
+          echo "" >> $GITHUB_ENV
+          echo "See the [commit history](https://github.com/${{ github.repository }}/commits/${{ github.ref_name }}) for changes in this release." >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: SoundVault ${{ github.ref_name }}
+          body: ${{ env.RELEASE_NOTES }}
+          files: dist/*
+          draft: false
+          prerelease: false

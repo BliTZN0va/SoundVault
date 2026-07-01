@@ -5,6 +5,7 @@ import json
 import time
 import random
 import sys
+import platform
 import subprocess
 import mimetypes
 import shutil
@@ -420,7 +421,12 @@ def play_track(track_id):
     if not os.path.exists(location):
         return jsonify({"error": "File not found"}), 404
     try:
-        os.startfile(location)
+        if platform.system() == 'Darwin':
+            subprocess.run(['open', location], check=False)
+        elif platform.system() == 'Linux':
+            subprocess.run(['xdg-open', location], check=False)
+        else:
+            os.startfile(location)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -437,10 +443,12 @@ def reveal_track(track_id):
     if not os.path.exists(location):
         return jsonify({"error": "File not found"}), 404
     try:
-        if sys.platform == 'win32':
-            subprocess.run(['explorer', '/select,' + location], check=False)
+        if platform.system() == 'Darwin':
+            subprocess.run(['open', '-R', location], check=False)
+        elif platform.system() == 'Linux':
+            subprocess.run(['xdg-open', os.path.dirname(location)], check=False)
         else:
-            os.startfile(os.path.dirname(location))
+            subprocess.run(['explorer', '/select,' + location], check=False)
         return jsonify({"ok": True})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

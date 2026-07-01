@@ -35,5 +35,6 @@
     "uplifting": "#2ecc71",
     "voice": "#f1c40f"
   },
-  "theme": "dark"
+  "theme": "dark",
+  "version": "1.0.2"
 }

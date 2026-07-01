@@ -91,7 +91,7 @@ def build_exe():
 
     print("  Building with PyInstaller...")
     result = subprocess.run(
-        ["pyinstaller", str(spec_file)],
+        [sys.executable, "-m", "PyInstaller", str(spec_file)],
         capture_output=True, text=True, cwd=PROJECT_ROOT
     )
     if result.returncode != 0:

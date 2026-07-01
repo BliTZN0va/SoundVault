@@ -38,3 +38,16 @@ check_icon.py
 # CI tool output
 analysis_output.json
 tools/ai_config.json
+
+# Build artifacts
+*.dmg
+*.AppImage
+*.msi
+*.exe
+*.app
+
+# AppImage staging
+AppDir/
+
+# Script artifacts
+scripts/appimagetool
