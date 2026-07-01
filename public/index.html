@@ -15,7 +15,9 @@
   --radius: 8px;
   --radius-sm: 5px;
   --radius-lg: 12px;
-  font-size: 13px;
+  --font-scale: 1;
+  --anim-speed: 1;
+  --compact: 0;
 
   --bg: #0b0916;
   --bg-surface-r: 18; --bg-surface-g: 15; --bg-surface-b: 35;
@@ -133,6 +135,138 @@
   --danger: #ff3050;
 }
 
+:root.midnight {
+  --bg: #050510;
+  --bg-surface-r: 8; --bg-surface-g: 8; --bg-surface-b: 26;
+  --bg-elevated-r: 12; --bg-elevated-g: 12; --bg-elevated-b: 36;
+  --glass-a: 0.7;
+  --bg-hover: rgba(16, 16, 48, 0.6);
+  --text: #c8d8ff;
+  --text-secondary: #7890d0;
+  --muted: #5068a0;
+  --muted2: #384878;
+  --accent: #4a80ff;
+  --accent-hover: #6a9aff;
+  --accent-muted: rgba(74, 128, 255, 0.2);
+  --accent-glow: rgba(74, 128, 255, 0.3);
+  --star: #f0c848;
+  --success: #38e898;
+  --danger: #f05058;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+}
+
+:root.forest {
+  --bg: #080e08;
+  --bg-surface-r: 10; --bg-surface-g: 20; --bg-surface-b: 12;
+  --bg-elevated-r: 14; --bg-elevated-g: 28; --bg-elevated-b: 16;
+  --glass-a: 0.7;
+  --bg-hover: rgba(20, 40, 24, 0.6);
+  --text: #c8e8d0;
+  --text-secondary: #78b888;
+  --muted: #489060;
+  --muted2: #307048;
+  --accent: #30d878;
+  --accent-hover: #50f090;
+  --accent-muted: rgba(48, 216, 120, 0.2);
+  --accent-glow: rgba(48, 216, 120, 0.3);
+  --star: #f0c848;
+  --success: #38e898;
+  --danger: #f05058;
+  --border: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root.coffee {
+  --bg: #100a06;
+  --bg-surface-r: 24; --bg-surface-g: 16; --bg-surface-b: 10;
+  --bg-elevated-r: 34; --bg-elevated-g: 22; --bg-elevated-b: 14;
+  --glass-a: 0.7;
+  --bg-hover: rgba(44, 30, 18, 0.6);
+  --text: #e8d8c8;
+  --text-secondary: #c0a888;
+  --muted: #907050;
+  --muted2: #705840;
+  --accent: #d4a050;
+  --accent-hover: #e8b868;
+  --accent-muted: rgba(212, 160, 80, 0.2);
+  --accent-glow: rgba(212, 160, 80, 0.3);
+  --star: #f0c848;
+  --success: #38e898;
+  --danger: #f05058;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root.royal {
+  --bg: #0c0618;
+  --bg-surface-r: 18; --bg-surface-g: 10; --bg-surface-b: 34;
+  --bg-elevated-r: 26; --bg-elevated-g: 14; --bg-elevated-b: 44;
+  --glass-a: 0.7;
+  --bg-hover: rgba(34, 18, 56, 0.6);
+  --text: #e0d0f0;
+  --text-secondary: #b090d8;
+  --muted: #8060b0;
+  --muted2: #604090;
+  --accent: #c89040;
+  --accent-hover: #e0a860;
+  --accent-muted: rgba(200, 144, 64, 0.2);
+  --accent-glow: rgba(200, 144, 64, 0.3);
+  --star: #f0c848;
+  --success: #38e898;
+  --danger: #f05058;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root.candy {
+  --bg: #120810;
+  --bg-surface-r: 28; --bg-surface-g: 12; --bg-surface-b: 24;
+  --bg-elevated-r: 40; --bg-elevated-g: 16; --bg-elevated-b: 34;
+  --glass-a: 0.7;
+  --bg-hover: rgba(52, 20, 44, 0.6);
+  --text: #f0d8e8;
+  --text-secondary: #d890c0;
+  --muted: #b06098;
+  --muted2: #904078;
+  --accent: #f078c8;
+  --accent-hover: #ff98d8;
+  --accent-muted: rgba(240, 120, 200, 0.2);
+  --accent-glow: rgba(240, 120, 200, 0.3);
+  --star: #f0c848;
+  --success: #38e898;
+  --danger: #f05058;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root.monochrome {
+  --bg: #080808;
+  --bg-surface-r: 18; --bg-surface-g: 18; --bg-surface-b: 18;
+  --bg-elevated-r: 28; --bg-elevated-g: 28; --bg-elevated-b: 28;
+  --glass-a: 0.7;
+  --bg-hover: rgba(40, 40, 40, 0.6);
+  --text: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --muted: #707070;
+  --muted2: #505050;
+  --accent: #c0c0c0;
+  --accent-hover: #e0e0e0;
+  --accent-muted: rgba(192, 192, 192, 0.2);
+  --accent-glow: rgba(192, 192, 192, 0.3);
+  --star: #d0d0d0;
+  --success: #a0a0a0;
+  --danger: #808080;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.15);
+  --shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box }
 
 body {
@@ -141,7 +275,8 @@ body {
   font-family: 'Inter', sans-serif;
   min-height: 100vh;
   overflow: hidden;
-  transition: background 0.5s ease, color 0.3s ease;
+  font-size: calc(13px * var(--font-scale));
+  transition: background 0.5s ease, color 0.3s ease, font-size 0.3s ease;
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px }
@@ -323,6 +458,14 @@ sidebar::-webkit-scrollbar { width: 3px }
 }
 
 .theme-btn .icon { font-size: 12px }
+
+.theme-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 main { display: flex; flex-direction: column; overflow: hidden }
 
@@ -688,6 +831,23 @@ main { display: flex; flex-direction: column; overflow: hidden }
 .btn-danger:hover { background: var(--danger); color: #fff }
 
 .btn-small { font-size: 10px; padding: 4px 8px }
+
+body.compact .track-card { padding: 8px 10px; margin-bottom: 3px }
+body.compact .filter-btn { padding: 4px 14px; font-size: 11px }
+body.compact .sidebar-label { padding: 5px 14px 2px; font-size: 8px }
+body.compact .toolbar { padding: 4px 12px }
+body.compact .track-list { padding: 6px 12px }
+body.compact .track-title { font-size: 12px }
+body.compact .track-artist { font-size: 10px }
+body.compact .player-bar { height: 64px; padding: 0 14px }
+body.compact .player-cover { width: 36px; height: 36px; font-size: 16px }
+body.compact .player-title { font-size: 12px }
+body.compact .player-artist { font-size: 10px }
+body.compact sidebar { padding: 4px 0 }
+body.compact header { height: 40px; padding: 0 12px }
+body.compact .modal { padding: 18px }
+body.compact .form-group { margin-bottom: 10px }
+body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: 10px }
 
 .player-bar {
   position: fixed;
@@ -1143,24 +1303,42 @@ main { display: flex; flex-direction: column; overflow: hidden }
   <div class="form-group"><label class="form-label">Supported Extensions</label><input class="form-input" id="setting-extensions" placeholder=".mp3, .wav, .flac, .m4a, .ogg, .aac, .wma"></div>
   <div class="appearance-section">
     <div class="modal-title" style="font-size:14px;margin-bottom:10px">Appearance</div>
+
     <div class="form-group">
       <label class="form-label">Theme</label>
       <div class="theme-options" id="theme-options">
-        <button type="button" class="theme-opt" data-theme="dark" onclick="setTheme('dark')">Dark</button>
-        <button type="button" class="theme-opt" data-theme="light" onclick="setTheme('light')">Light</button>
-        <button type="button" class="theme-opt" data-theme="neon" onclick="setTheme('neon')">Neon</button>
-        <button type="button" class="theme-opt" data-theme="cyberpunk" onclick="setTheme('cyberpunk')">Cyberpunk</button>
-        <button type="button" class="theme-opt" data-theme="ocean" onclick="setTheme('ocean')">Ocean</button>
-        <button type="button" class="theme-opt" data-theme="sunset" onclick="setTheme('sunset')">Sunset</button>
+        <button type="button" class="theme-opt" data-theme="dark" onclick="setTheme('dark')"><span class="theme-swatch" style="background:#7c5cf5"></span>Dark</button>
+        <button type="button" class="theme-opt" data-theme="light" onclick="setTheme('light')"><span class="theme-swatch" style="background:#6a4ae0"></span>Light</button>
+        <button type="button" class="theme-opt" data-theme="neon" onclick="setTheme('neon')"><span class="theme-swatch" style="background:#f020d0"></span>Neon</button>
+        <button type="button" class="theme-opt" data-theme="cyberpunk" onclick="setTheme('cyberpunk')"><span class="theme-swatch" style="background:#ffd000"></span>Cyberpunk</button>
+        <button type="button" class="theme-opt" data-theme="ocean" onclick="setTheme('ocean')"><span class="theme-swatch" style="background:#00d4ff"></span>Ocean</button>
+        <button type="button" class="theme-opt" data-theme="sunset" onclick="setTheme('sunset')"><span class="theme-swatch" style="background:#ff6040"></span>Sunset</button>
+        <button type="button" class="theme-opt" data-theme="midnight" onclick="setTheme('midnight')"><span class="theme-swatch" style="background:#4a80ff"></span>Midnight</button>
+        <button type="button" class="theme-opt" data-theme="forest" onclick="setTheme('forest')"><span class="theme-swatch" style="background:#30d878"></span>Forest</button>
+        <button type="button" class="theme-opt" data-theme="coffee" onclick="setTheme('coffee')"><span class="theme-swatch" style="background:#d4a050"></span>Coffee</button>
+        <button type="button" class="theme-opt" data-theme="royal" onclick="setTheme('royal')"><span class="theme-swatch" style="background:#c89040"></span>Royal</button>
+        <button type="button" class="theme-opt" data-theme="candy" onclick="setTheme('candy')"><span class="theme-swatch" style="background:#f078c8"></span>Candy</button>
+        <button type="button" class="theme-opt" data-theme="monochrome" onclick="setTheme('monochrome')"><span class="theme-swatch" style="background:#c0c0c0"></span>Mono</button>
       </div>
     </div>
+
     <div class="form-group">
       <label class="form-label">Accent Color</label>
       <div style="display:flex;gap:6px;align-items:center">
         <input type="color" id="appearance-accent" value="#7c5cf5" style="width:32px;height:32px;border:1px solid var(--border);border-radius:5px;padding:1px;background:rgba(var(--bg-elevated-r), var(--bg-elevated-g), var(--bg-elevated-b), var(--glass-a));cursor:pointer">
         <button type="button" class="btn btn-small" onclick="applyAccentColor()">Apply</button>
+        <button type="button" class="btn btn-small" onclick="resetAccentColor()" title="Reset to theme default">Reset</button>
       </div>
     </div>
+
+    <div class="form-group">
+      <label class="form-label">Font Size</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="appearance-font-size" class="volume-slider" style="flex:1;width:auto" min="10" max="18" value="13" oninput="setFontSize(this.value)">
+        <span id="font-size-value" style="font-size:11px;color:var(--muted);min-width:32px">13px</span>
+      </div>
+    </div>
+
     <div class="form-group">
       <label class="form-label">Glass Blur</label>
       <div style="display:flex;gap:6px;align-items:center">
@@ -1168,7 +1346,32 @@ main { display: flex; flex-direction: column; overflow: hidden }
         <span id="glass-value" style="font-size:11px;color:var(--muted);min-width:28px">16px</span>
       </div>
     </div>
+
     <div class="form-group">
+      <label class="form-label">Glass Opacity</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="appearance-glass-opacity" class="volume-slider" style="flex:1;width:auto" min="20" max="90" value="55" oninput="setGlassOpacity(this.value)">
+        <span id="glass-opacity-value" style="font-size:11px;color:var(--muted);min-width:28px">55%</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Animation Speed</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        <input type="range" id="appearance-anim-speed" class="volume-slider" style="flex:1;width:auto" min="0" max="200" value="100" oninput="setAnimSpeed(this.value)">
+        <span id="anim-speed-value" style="font-size:11px;color:var(--muted);min-width:32px">1x</span>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Compact Mode</label>
+      <div style="display:flex;align-items:center;gap:6px">
+        <input type="checkbox" id="appearance-compact" style="width:auto;accent-color:var(--accent)" onchange="setCompact(this.checked)">
+        <label for="appearance-compact" style="color:var(--muted);font-size:11px">Reduce spacing for more content</label>
+      </div>
+    </div>
+
+    <div class="form-group" style="border-top:1px solid var(--border);padding-top:12px">
       <label class="form-label">Background</label>
       <div class="theme-options" id="bg-style-options">
         <button type="button" class="theme-opt active" data-bg="gradient" onclick="setBgStyle('gradient')">Gradient</button>
@@ -1209,12 +1412,9 @@ main { display: flex; flex-direction: column; overflow: hidden }
         <div id="bg-preview" style="width:100%;height:70px;border-radius:var(--radius-sm);border:1px solid var(--border);background-size:cover;background-position:center;background-color:rgba(var(--bg-elevated-r), var(--bg-elevated-g), var(--bg-elevated-b), var(--glass-a))"></div>
       </div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Glass Opacity</label>
-      <div style="display:flex;gap:6px;align-items:center">
-        <input type="range" id="appearance-glass-opacity" class="volume-slider" style="flex:1;width:auto" min="20" max="90" value="55" oninput="setGlassOpacity(this.value)">
-        <span id="glass-opacity-value" style="font-size:11px;color:var(--muted);min-width:28px">55%</span>
-      </div>
+
+    <div style="margin-top:14px;display:flex;gap:6px">
+      <button type="button" class="btn" onclick="resetAppearance()" style="flex:1">Reset Appearance</button>
     </div>
   </div>
   <div class="modal-footer">
@@ -1614,6 +1814,14 @@ async function openSettingsModal() {
     document.getElementById('appearance-glass-opacity').value = savedGlassOpacity;
     document.getElementById('glass-opacity-value').textContent = savedGlassOpacity + '%';
     document.documentElement.style.setProperty('--blur', savedGlass + 'px');
+    const savedFontSize = localStorage.getItem('soundvault-font-size') || '13';
+    document.getElementById('appearance-font-size').value = savedFontSize;
+    document.getElementById('font-size-value').textContent = savedFontSize + 'px';
+    const savedAnimSpeed = localStorage.getItem('soundvault-anim-speed') || '100';
+    document.getElementById('appearance-anim-speed').value = savedAnimSpeed;
+    setAnimSpeed(parseInt(savedAnimSpeed));
+    const isCompact = localStorage.getItem('soundvault-compact') === '1';
+    document.getElementById('appearance-compact').checked = isCompact;
     applyBgSettings();
   } catch(e) { console.error('Failed to load config:', e); }
 }
@@ -1867,7 +2075,7 @@ async function browseMusicFolder() {
 }
 
 function toggleTheme() {
-  const themes = ['dark', 'light', 'neon', 'cyberpunk', 'ocean', 'sunset'];
+  const themes = ['dark', 'light', 'neon', 'cyberpunk', 'ocean', 'sunset', 'midnight', 'forest', 'coffee', 'royal', 'candy', 'monochrome'];
   const current = [...document.documentElement.classList].find(c => themes.includes(c)) || 'dark';
   const idx = themes.indexOf(current);
   const next = themes[(idx + 1) % themes.length];
@@ -1876,12 +2084,12 @@ function toggleTheme() {
 
 function setTheme(theme) {
   const root = document.documentElement;
-  root.classList.remove('light', 'neon', 'cyberpunk', 'ocean', 'sunset');
+  root.classList.remove('light', 'neon', 'cyberpunk', 'ocean', 'sunset', 'midnight', 'forest', 'coffee', 'royal', 'candy', 'monochrome');
   if (theme !== 'dark') root.classList.add(theme);
   document.querySelectorAll('.theme-opt').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
-  const names = {dark:'Dark',light:'Light',neon:'Neon',cyberpunk:'Cyberpunk',ocean:'Ocean',sunset:'Sunset'};
+  const names = {dark:'Dark',light:'Light',neon:'Neon',cyberpunk:'Cyberpunk',ocean:'Ocean',sunset:'Sunset',midnight:'Midnight',forest:'Forest',coffee:'Coffee',royal:'Royal',candy:'Candy',monochrome:'Mono'};
   document.getElementById('theme-label').textContent = names[theme] || 'Dark';
-  const iconMap = {dark:'&#9790;',light:'&#9728;',neon:'&#9889;',cyberpunk:'&#9881;',ocean:'&#127754;',sunset:'&#127751;'};
+  const iconMap = {dark:'&#9790;',light:'&#9728;',neon:'&#9889;',cyberpunk:'&#9881;',ocean:'&#127754;',sunset:'&#127751;',midnight:'&#127769;',forest:'&#127795;',coffee:'&#9749;',royal:'&#128081;',candy:'&#127853;',monochrome:'&#9898;'};
   document.getElementById('theme-icon').innerHTML = iconMap[theme] || '&#9790;';
   localStorage.setItem('soundvault-theme', theme);
   fetch('/api/config', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ theme }) }).catch(() => {});
@@ -1925,6 +2133,71 @@ function setGlassOpacity(val) {
   localStorage.setItem('soundvault-glass-opacity', val);
 }
 
+function setFontSize(val) {
+  const scale = val / 13;
+  document.documentElement.style.setProperty('--font-scale', scale);
+  document.getElementById('font-size-value').textContent = val + 'px';
+  localStorage.setItem('soundvault-font-size', val);
+}
+
+function setAnimSpeed(val) {
+  const speed = val / 100;
+  document.documentElement.style.setProperty('--anim-speed', speed);
+  const duration = Math.max(0, 0.5 * speed);
+  document.getElementById('anim-speed-value').textContent = (speed >= 1 ? speed + 'x' : '0.' + Math.round(speed * 10) + 'x');
+  localStorage.setItem('soundvault-anim-speed', val);
+}
+
+function setCompact(enabled) {
+  document.body.classList.toggle('compact', enabled);
+  localStorage.setItem('soundvault-compact', enabled ? '1' : '0');
+}
+
+function resetAccentColor() {
+  const theme = localStorage.getItem('soundvault-theme') || 'dark';
+  const defaultAccents = {dark:'#7c5cf5',light:'#6a4ae0',neon:'#f020d0',cyberpunk:'#ffd000',ocean:'#00d4ff',sunset:'#ff6040',midnight:'#4a80ff',forest:'#30d878',coffee:'#d4a050',royal:'#c89040',candy:'#f078c8',monochrome:'#c0c0c0'};
+  const color = defaultAccents[theme] || '#7c5cf5';
+  document.getElementById('appearance-accent').value = color;
+  localStorage.removeItem('soundvault-accent');
+  const root = document.documentElement;
+  root.style.removeProperty('--accent');
+  root.style.removeProperty('--accent-hover');
+  root.style.removeProperty('--accent-muted');
+  root.style.removeProperty('--accent-glow');
+  applySavedTheme();
+}
+
+function resetAppearance() {
+  localStorage.removeItem('soundvault-accent');
+  localStorage.removeItem('soundvault-glass');
+  localStorage.removeItem('soundvault-glass-opacity');
+  localStorage.removeItem('soundvault-font-size');
+  localStorage.removeItem('soundvault-anim-speed');
+  localStorage.removeItem('soundvault-compact');
+  localStorage.removeItem('soundvault-bg-style');
+  localStorage.removeItem('soundvault-gradient');
+  localStorage.removeItem('soundvault-bg-solid');
+  localStorage.removeItem('soundvault-bg-image');
+  localStorage.removeItem('soundvault-bg-opacity');
+  localStorage.removeItem('soundvault-theme');
+  setTheme('dark');
+  document.getElementById('appearance-accent').value = '#7c5cf5';
+  document.getElementById('appearance-glass').value = '16';
+  document.getElementById('glass-value').textContent = '16px';
+  document.documentElement.style.setProperty('--blur', '16px');
+  setGlassOpacity(55);
+  document.getElementById('appearance-glass-opacity').value = '55';
+  setFontSize(13);
+  document.getElementById('appearance-font-size').value = '13';
+  setAnimSpeed(100);
+  document.getElementById('appearance-anim-speed').value = '100';
+  document.body.classList.remove('compact');
+  document.getElementById('appearance-compact').checked = false;
+  setBgStyle('gradient');
+  setGradient('default');
+  showToast('Appearance reset to defaults');
+}
+
 function applySavedTheme() {
   const saved = localStorage.getItem('soundvault-theme') || config.theme || 'dark';
   setTheme(saved);
@@ -1943,6 +2216,15 @@ function applySavedTheme() {
   document.documentElement.style.setProperty('--blur', savedGlass + 'px');
   const savedGlassOpacity = localStorage.getItem('soundvault-glass-opacity') || '55';
   setGlassOpacity(parseInt(savedGlassOpacity));
+  const savedFontSize = localStorage.getItem('soundvault-font-size') || '13';
+  document.getElementById('appearance-font-size').value = savedFontSize;
+  setFontSize(parseInt(savedFontSize));
+  const savedAnimSpeed = localStorage.getItem('soundvault-anim-speed') || '100';
+  document.getElementById('appearance-anim-speed').value = savedAnimSpeed;
+  setAnimSpeed(parseInt(savedAnimSpeed));
+  const isCompact = localStorage.getItem('soundvault-compact') === '1';
+  document.getElementById('appearance-compact').checked = isCompact;
+  document.body.classList.toggle('compact', isCompact);
   applyBgStyle();
 }
 
