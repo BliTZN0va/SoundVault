@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+
+# Environment
+.env
+.venv/
+venv/
+
+# OS
+Thumbs.db
+*.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Installer output
+installer/build/
+installer/*.exe
+installer/*.tmp
+
+# Icon generation
+gen_icon.py
+check_icon.py
+
+# User data (keep config/data in repo only for dev)
+# config.json
+# database/data.json

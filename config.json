@@ -1,0 +1,39 @@
+{
+  "music_folder": "E:\\Music SFX",
+  "auto_detect": true,
+  "auto_detect_extensions": [
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".flac",
+    ".m4a",
+    ".ogg",
+    ".aac",
+    ".wma"
+  ],
+  "data_file": "data.json",
+  "backup_folder": "database",
+  "tag_colors": {
+    "ambient": "#27ae60",
+    "chill": "#16a085",
+    "cinematic": "#8e44ad",
+    "comedy": "#f39c12",
+    "cuts": "#7f8c8d",
+    "dramatic": "#c0392b",
+    "emotional": "#e67e22",
+    "epic": "#d35400",
+    "fantasy": "#1abc9c",
+    "horror": "#2c3e50",
+    "mystery": "#2980b9",
+    "pvp": "#c0392b",
+    "run": "#e67e22",
+    "sad": "#7f8c8d",
+    "sfx": "#95a5a6",
+    "tension": "#8e44ad",
+    "trailer": "#3498db",
+    "trap": "#9b59b6",
+    "uplifting": "#2ecc71",
+    "voice": "#f1c40f"
+  },
+  "theme": "dark"
+}
