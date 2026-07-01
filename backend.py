@@ -103,7 +103,7 @@ def save_data(data, backup=True):
 
 def normalize_filename(filename):
     name, ext = os.path.splitext(filename)
-    name = name.replace('_', ' ').replace('-', ' ').replace('.', ' ')
+    name = name.replace('_', ' ').replace('-', ' ')
     name = ' '.join(name.split())
     return name.lower(), ext.lower()
 
@@ -340,7 +340,7 @@ def delete_track(track_id):
 def batch_update_tracks():
     data = load_data()
     body = request.json
-    track_ids = {int(i) for i in body.get('ids', []) if isinstance(i, (int, float))}
+    track_ids = {int(i) for i in body.get('ids', [])}
     updates = body.get('updates', {})
     for track in data['tracks']:
         if track['id'] in track_ids:
@@ -438,7 +438,7 @@ def reveal_track(track_id):
         return jsonify({"error": "File not found"}), 404
     try:
         if sys.platform == 'win32':
-            subprocess.run(['explorer', f'/select,{location}'], check=False)
+            subprocess.run(['explorer', '/select,' + location], check=False)
         else:
             os.startfile(os.path.dirname(location))
         return jsonify({"ok": True})
@@ -612,7 +612,7 @@ def get_stats():
 def batch_tag_tracks():
     data = load_data()
     body = request.json
-    track_ids = [int(i) for i in body.get('ids', []) if isinstance(i, (int, float))]
+    track_ids = [int(i) for i in body.get('ids', [])]
     tags_to_add = body.get('addTags', [])
     tags_to_remove = body.get('removeTags', [])
     for track in data['tracks']:
@@ -629,7 +629,7 @@ def batch_tag_tracks():
 @app.route('/api/tracks/batch/delete', methods=['POST'])
 def batch_delete_tracks():
     data = load_data()
-    track_ids = {int(i) for i in request.json.get('ids', []) if isinstance(i, (int, float))}
+    track_ids = {int(i) for i in request.json.get('ids', [])}
     data['tracks'] = [t for t in data['tracks'] if t['id'] not in track_ids]
     save_data(data)
     return jsonify({"ok": True, "deleted": len(track_ids)})
@@ -638,7 +638,7 @@ def batch_delete_tracks():
 def batch_episode_tracks():
     data = load_data()
     body = request.json
-    track_ids = {int(i) for i in body.get('ids', []) if isinstance(i, (int, float))}
+    track_ids = {int(i) for i in body.get('ids', [])}
     ep_to_add = body.get('addEpisodes', [])
     ep_to_remove = body.get('removeEpisodes', [])
     for track in data['tracks']:
