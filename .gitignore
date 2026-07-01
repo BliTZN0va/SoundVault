@@ -34,3 +34,7 @@ check_icon.py
 # User data (keep config/data in repo only for dev)
 # config.json
 # database/data.json
+
+# CI tool output
+analysis_output.json
+tools/ai_config.json

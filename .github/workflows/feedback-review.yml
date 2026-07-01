@@ -1,0 +1,123 @@
+name: AI Feedback Review
+
+on:
+  issues:
+    types: [labeled, opened]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  AI_PROVIDER: ${{ vars.AI_PROVIDER || 'ollama' }}
+  AI_MODEL: ${{ vars.AI_MODEL || 'llama3.2' }}
+  AI_ENDPOINT: ${{ vars.AI_ENDPOINT || 'http://localhost:11434' }}
+
+jobs:
+  analyze:
+    if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'bug')
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: pip install requests pyyaml
+
+      - name: Analyze issue with AI
+        id: analyze
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python .github/workflows/analyze_issue.py \
+            --title "${{ github.event.issue.title }}" \
+            --body "${{ github.event.issue.body }}" \
+            --number ${{ github.event.issue.number }}
+
+      - name: Post AI analysis comment
+        uses: actions/github-script@v7
+        id: comment
+        with:
+          script: |
+            const fs = require('fs');
+            let analysis = { summary: '', code_changes: [], severity: 'unknown', suggested_fix: '' };
+            try {
+              const data = fs.readFileSync('analysis_output.json', 'utf8');
+              analysis = JSON.parse(data);
+            } catch (e) {
+              console.log('No analysis output file found, using defaults');
+            }
+
+            const labels = context.payload.issue.labels.map(l => l.name);
+            const isBug = labels.includes('bug');
+
+            let comment = '## 🤖 AI Feedback Analysis\n\n';
+            comment += `**Severity:** ${analysis.severity || 'unknown'}\n\n`;
+            comment += `**Summary:**\n${analysis.summary || 'No summary provided.'}\n\n`;
+
+            if (analysis.code_changes && analysis.code_changes.length > 0) {
+              comment += '### Suggested Code Changes\n\n';
+              for (const change of analysis.code_changes) {
+                comment += `**File:** \`${change.file}\`\n`;
+                if (change.description) comment += `${change.description}\n`;
+                comment += '```diff\n';
+                comment += change.diff || 'No diff provided.';
+                comment += '\n```\n\n';
+              }
+            }
+
+            if (analysis.suggested_fix) {
+              comment += `### Suggested Fix\n\n${analysis.suggested_fix}\n`;
+            }
+
+            comment += '\n---\n';
+            comment += `_Analysis powered by ${process.env.AI_PROVIDER || 'ollama'} | Model: ${process.env.AI_MODEL || 'llama3.2'}_`;
+
+            const { data: createdComment } = await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+            return analysis;
+
+      - name: Create fix PR for bug reports
+        if: contains(github.event.issue.labels.*.name, 'bug')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          BRANCH="fix/auto-issue-${ISSUE_NUMBER}"
+          TIMESTAMP=$(date +%s)
+
+          git config user.name "SoundVault AI Reviewer"
+          git config user.email "actions@github.com"
+          git checkout -b "${BRANCH}"
+
+          if [ -f "analysis_output.json" ]; then
+            python .github/workflows/apply_fixes.py analysis_output.json
+          fi
+
+          if git diff --quiet; then
+            echo "No changes to commit — skipping PR creation."
+            exit 0
+          fi
+
+          git add -A
+          git commit -m "Auto-fix: apply suggested changes for issue #${ISSUE_NUMBER}"
+          git push origin "${BRANCH}"
+
+          gh pr create \
+            --title "Fix: address issue #${ISSUE_NUMBER}" \
+            --body "## 🤖 Auto-generated Fix PR\n\nThis PR was automatically created by the AI Feedback Review workflow in response to issue #${ISSUE_NUMBER}.\n\n**Issue:** ${{ github.event.issue.title }}\n\nPlease review the changes carefully before merging." \
+            --base "${{ github.ref_name }}" \
+            --head "${BRANCH}" \
+            --label "auto-pr"
