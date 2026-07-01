@@ -467,6 +467,59 @@ sidebar::-webkit-scrollbar { width: 3px }
   flex-shrink: 0;
 }
 
+.theme-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.theme-preview-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  cursor: pointer;
+  transition: all calc(0.15s * var(--anim-speed));
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.theme-preview-card:hover {
+  border-color: var(--accent);
+  transform: scale(1.05);
+}
+
+.theme-preview-card.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.theme-preview-card .tpc-bg {
+  height: 12px;
+  border-radius: 2px;
+}
+
+.theme-preview-card .tpc-accent {
+  height: 4px;
+  border-radius: 2px;
+  width: 60%;
+}
+
+.theme-preview-card .tpc-text {
+  height: 3px;
+  border-radius: 2px;
+  width: 80%;
+  opacity: 0.5;
+}
+
+.theme-preview-card .tpc-name {
+  font-size: 8px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1;
+}
+
 main { display: flex; flex-direction: column; overflow: hidden }
 
 .toolbar {
@@ -1064,7 +1117,13 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: 10px }
 .hidden { display: none !important }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
-.track-card { animation: fadeIn 0.2s ease }
+.track-card { animation: fadeIn calc(0.2s * var(--anim-speed)) ease }
+.track-card .star-btn { transition: all calc(0.2s * var(--anim-speed)) }
+.track-card .action-btn { transition: all calc(0.15s * var(--anim-speed)) }
+.modal-overlay { transition: opacity calc(0.2s * var(--anim-speed)) }
+.sidebar .filter-btn { transition: all calc(0.15s * var(--anim-speed)) }
+.batch-bar { animation: fadeIn calc(0.2s * var(--anim-speed)) ease }
+.theme-opt { transition: all calc(0.15s * var(--anim-speed)) }
 
 .appearance-section { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border) }
 .appearance-section .form-label { margin-top: 10px }
@@ -1213,6 +1272,7 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: 10px }
   </div>
   <div class="sidebar-section">
     <div class="sidebar-label">By Tag</div>
+    <div style="padding:2px 10px 4px"><input class="form-input" type="text" id="tag-search" placeholder="Search tags..." oninput="renderTagFilters()" style="font-size:10px;padding:4px 6px"></div>
     <div id="tag-filters"></div>
   </div>
   <div class="sidebar-section">
@@ -1246,6 +1306,7 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: 10px }
     <button type="button" class="btn btn-primary" onclick="openModal()">+ Add</button>
     <button type="button" class="btn" onclick="rescan()">Scan</button>
     <button type="button" class="btn" onclick="exportData()">Export</button>
+    <button type="button" class="btn" onclick="importData()">Import</button>
   </div>
   <div class="track-list">
     <div class="track-count" id="track-count">Loading...</div>
@@ -1306,7 +1367,21 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: 10px }
 
     <div class="form-group">
       <label class="form-label">Theme</label>
-      <div class="theme-options" id="theme-options">
+      <div class="theme-preview-grid" id="theme-preview-grid">
+        <div class="theme-preview-card" data-theme="dark" onclick="setTheme('dark')"><div class="tpc-bg" style="background:#0b0916"></div><div class="tpc-accent" style="background:#7c5cf5"></div><div class="tpc-text" style="background:#dedeff"></div><div class="tpc-name">Dark</div></div>
+        <div class="theme-preview-card" data-theme="light" onclick="setTheme('light')"><div class="tpc-bg" style="background:#eeecf4"></div><div class="tpc-accent" style="background:#6a4ae0"></div><div class="tpc-text" style="background:#1a1630"></div><div class="tpc-name">Light</div></div>
+        <div class="theme-preview-card" data-theme="neon" onclick="setTheme('neon')"><div class="tpc-bg" style="background:#080012"></div><div class="tpc-accent" style="background:#f020d0"></div><div class="tpc-text" style="background:#f0e0ff"></div><div class="tpc-name">Neon</div></div>
+        <div class="theme-preview-card" data-theme="cyberpunk" onclick="setTheme('cyberpunk')"><div class="tpc-bg" style="background:#0d0800"></div><div class="tpc-accent" style="background:#ffd000"></div><div class="tpc-text" style="background:#ffe8c0"></div><div class="tpc-name">Cyberpunk</div></div>
+        <div class="theme-preview-card" data-theme="ocean" onclick="setTheme('ocean')"><div class="tpc-bg" style="background:#00101a"></div><div class="tpc-accent" style="background:#00d4ff"></div><div class="tpc-text" style="background:#c0f0ff"></div><div class="tpc-name">Ocean</div></div>
+        <div class="theme-preview-card" data-theme="sunset" onclick="setTheme('sunset')"><div class="tpc-bg" style="background:#1a0808"></div><div class="tpc-accent" style="background:#ff6040"></div><div class="tpc-text" style="background:#ffd8d0"></div><div class="tpc-name">Sunset</div></div>
+        <div class="theme-preview-card" data-theme="midnight" onclick="setTheme('midnight')"><div class="tpc-bg" style="background:#050510"></div><div class="tpc-accent" style="background:#4a80ff"></div><div class="tpc-text" style="background:#c8d8ff"></div><div class="tpc-name">Midnight</div></div>
+        <div class="theme-preview-card" data-theme="forest" onclick="setTheme('forest')"><div class="tpc-bg" style="background:#080e08"></div><div class="tpc-accent" style="background:#30d878"></div><div class="tpc-text" style="background:#c8e8d0"></div><div class="tpc-name">Forest</div></div>
+        <div class="theme-preview-card" data-theme="coffee" onclick="setTheme('coffee')"><div class="tpc-bg" style="background:#100a06"></div><div class="tpc-accent" style="background:#d4a050"></div><div class="tpc-text" style="background:#e8d8c8"></div><div class="tpc-name">Coffee</div></div>
+        <div class="theme-preview-card" data-theme="royal" onclick="setTheme('royal')"><div class="tpc-bg" style="background:#0c0618"></div><div class="tpc-accent" style="background:#c89040"></div><div class="tpc-text" style="background:#e0d0f0"></div><div class="tpc-name">Royal</div></div>
+        <div class="theme-preview-card" data-theme="candy" onclick="setTheme('candy')"><div class="tpc-bg" style="background:#120810"></div><div class="tpc-accent" style="background:#f078c8"></div><div class="tpc-text" style="background:#f0d8e8"></div><div class="tpc-name">Candy</div></div>
+        <div class="theme-preview-card" data-theme="monochrome" onclick="setTheme('monochrome')"><div class="tpc-bg" style="background:#080808"></div><div class="tpc-accent" style="background:#c0c0c0"></div><div class="tpc-text" style="background:#e0e0e0"></div><div class="tpc-name">Mono</div></div>
+      </div>
+      <div class="theme-options" id="theme-options" style="margin-top:6px">
         <button type="button" class="theme-opt" data-theme="dark" onclick="setTheme('dark')"><span class="theme-swatch" style="background:#7c5cf5"></span>Dark</button>
         <button type="button" class="theme-opt" data-theme="light" onclick="setTheme('light')"><span class="theme-swatch" style="background:#6a4ae0"></span>Light</button>
         <button type="button" class="theme-opt" data-theme="neon" onclick="setTheme('neon')"><span class="theme-swatch" style="background:#f020d0"></span>Neon</button>
@@ -1496,16 +1571,21 @@ function updateStats() {
   document.getElementById('stat-starred').textContent = data.tracks.filter(t => t.starred).length;
 }
 
-function renderSidebar() {
+function renderTagFilters() {
   const cnt = {};
   (data.availableTags || []).forEach(t => cnt[t] = 0);
   data.tracks.forEach(t => (t.tags || []).forEach(tag => cnt[tag] = (cnt[tag] || 0) + 1));
-
-  document.getElementById('tag-filters').innerHTML = data.availableTags.map(tag =>
+  const query = (document.getElementById('tag-search')?.value || '').toLowerCase();
+  const filtered = data.availableTags.filter(t => t.toLowerCase().includes(query));
+  document.getElementById('tag-filters').innerHTML = filtered.map(tag =>
     '<button type="button" class="filter-btn ' + (activeFilter === 'tag:' + tag ? 'active' : '') + '" onclick="setFilter(\'tag:' + tag + '\',this)">' +
     '<span class="tag-dot" style="background:' + tagColor(tag) + '"></span>' + esc(tag) +
     '<span class="count">' + (cnt[tag] || 0) + '</span></button>'
   ).join('');
+}
+
+function renderSidebar() {
+  renderTagFilters();
 
   document.getElementById('count-all').textContent = data.tracks.length;
   document.getElementById('count-starred').textContent = data.tracks.filter(t => t.starred).length;
@@ -1624,7 +1704,7 @@ function renderTracks() {
   }
 
   c.innerHTML = filtered.map(t =>
-    '<div class="track-card ' + (t.used ? 'used-card' : '') + (selectedIds.has(t.id) ? ' selected' : '') + ' drag-source" id="card-' + t.id + '" draggable="true" oncontextmenu="showContextMenu(event,' + t.id + ')" ondragstart="startDrag(event,' + t.id + ')">' +
+    '<div class="track-card ' + (t.used ? 'used-card' : '') + (selectedIds.has(t.id) ? ' selected' : '') + ' drag-source" id="card-' + t.id + '" draggable="true" oncontextmenu="showContextMenu(event,' + t.id + ')" ondragstart="startDrag(event,' + t.id + ')" onclick="handleCardClick(event,' + t.id + ')">' +
     (selectMode ? '<input type="checkbox" class="track-select" ' + (selectedIds.has(t.id) ? 'checked' : '') + ' onchange="toggleSelect(' + t.id + ')">' : '<button type="button" class="star-btn ' + (t.starred ? 'starred' : '') + '" onclick="toggleStar(' + t.id + ')">&#9733;</button>') +
     '<div class="track-info">' +
     '<div class="track-title">' + esc(t.title) + '</div>' +
@@ -1779,9 +1859,11 @@ function openModal(id) {
   document.getElementById('f-artist').value = tr ? tr.artist : '';
   document.getElementById('f-notes').value = tr ? tr.notes : '';
   document.getElementById('f-location').value = tr ? (tr.location || '') : '';
+  const tc = data.tagColors || {};
   document.getElementById('tag-checkboxes').innerHTML = data.availableTags.map(tag =>
-    '<div><input type="checkbox" id="tc-' + tag + '" value="' + tag + '" ' + (tr && (tr.tags || []).includes(tag) ? 'checked' : '') + '> <label for="tc-' + tag + '">' +
-    '<span class="tag-dot" style="background:' + tagColor(tag) + ';width:7px;height:7px;margin-right:3px"></span>' + esc(tag) + '</label></div>'
+    '<div style="display:flex;align-items:center;gap:3px"><input type="checkbox" id="tc-' + tag + '" value="' + tag + '" ' + (tr && (tr.tags || []).includes(tag) ? 'checked' : '') + '> ' +
+    '<input type="color" value="' + tagColor(tag) + '" onchange="updateTagColor(\'' + tag + '\',this.value)" style="width:18px;height:18px;border:none;padding:0;cursor:pointer;background:none">' +
+    '<label for="tc-' + tag + '" style="font-size:11px">' + esc(tag) + '</label></div>'
   ).join('');
   document.getElementById('ep-checkboxes').innerHTML = data.episodes.map(ep =>
     '<div><input type="checkbox" id="ec-' + ep + '" value="' + ep + '" ' + (tr && (tr.episodes || []).includes(ep) ? 'checked' : '') + '> <label for="ec-' + ep + '">' + esc(ep) + '</label></div>'
@@ -1899,6 +1981,14 @@ async function deleteTrack() {
   } catch(e) {
     showToast('Failed to delete track', 'error');
   }
+}
+
+async function updateTagColor(tag, color) {
+  if (!data.tagColors) data.tagColors = {};
+  data.tagColors[tag] = color;
+  await fetch('/api/tags/color', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tag, color }) }).catch(() => {});
+  renderSidebar();
+  renderTracks();
 }
 
 async function addNewTagWithColor() {
@@ -2087,6 +2177,7 @@ function setTheme(theme) {
   root.classList.remove('light', 'neon', 'cyberpunk', 'ocean', 'sunset', 'midnight', 'forest', 'coffee', 'royal', 'candy', 'monochrome');
   if (theme !== 'dark') root.classList.add(theme);
   document.querySelectorAll('.theme-opt').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  document.querySelectorAll('.theme-preview-card').forEach(c => c.classList.toggle('active', c.dataset.theme === theme));
   const names = {dark:'Dark',light:'Light',neon:'Neon',cyberpunk:'Cyberpunk',ocean:'Ocean',sunset:'Sunset',midnight:'Midnight',forest:'Forest',coffee:'Coffee',royal:'Royal',candy:'Candy',monochrome:'Mono'};
   document.getElementById('theme-label').textContent = names[theme] || 'Dark';
   const iconMap = {dark:'&#9790;',light:'&#9728;',neon:'&#9889;',cyberpunk:'&#9881;',ocean:'&#127754;',sunset:'&#127751;',midnight:'&#127769;',forest:'&#127795;',coffee:'&#9749;',royal:'&#128081;',candy:'&#127853;',monochrome:'&#9898;'};
@@ -2354,6 +2445,15 @@ function toggleSelectMode() {
   renderTracks();
 }
 
+function handleCardClick(e, id) {
+  const tag = e.target.tagName;
+  if (tag === 'BUTTON' || tag === 'INPUT' || tag === 'SELECT' || tag === 'OPTION' || tag === 'LABEL') return;
+  if (e.ctrlKey || e.metaKey || e.shiftKey) {
+    e.preventDefault();
+    toggleSelect(id);
+  }
+}
+
 function toggleSelect(id) {
   if (selectedIds.has(id)) selectedIds.delete(id);
   else selectedIds.add(id);
@@ -2473,6 +2573,38 @@ async function exportData() {
     URL.revokeObjectURL(a.href);
     showToast('Database exported', 'success');
   } catch(e) { showToast('Failed to export', 'error'); }
+}
+
+async function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      if (!parsed.data || !parsed.data.tracks) {
+        showToast('Invalid backup file', 'error');
+        return;
+      }
+      const merge = confirm('Click OK to merge with existing data, Cancel to replace all data.');
+      const res = await fetch('/api/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: parsed.data, merge: merge })
+      });
+      if (res.ok) {
+        const dataRes = await fetch('/api/music');
+        data = await dataRes.json();
+        renderAll();
+        showToast('Import successful', 'success');
+      } else {
+        showToast('Import failed', 'error');
+      }
+    } catch(err) { showToast('Failed to parse file', 'error'); }
+  };
+  input.click();
 }
 
 function closeShortcutsModal() {
