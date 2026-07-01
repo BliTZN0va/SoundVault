@@ -2,7 +2,7 @@
 set -euo pipefail
 
 APP_NAME="SoundVault"
-VERSION="${1:-1.0.2}"
+VERSION="${1:-$(cat "$(cd "$(dirname "$0")" && pwd)/../VERSION" 2>/dev/null || echo "1.0.4")}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 APPDIR="${SCRIPT_DIR}/AppDir"

@@ -32,7 +32,7 @@ jobs:
           echo "New version: $NEW_VERSION"
           echo "$NEW_VERSION" > VERSION
           echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-          
+
           # Update config.json version
           if [ -f config.json ]; then
             python3 -c "
@@ -44,7 +44,7 @@ with open('config.json', 'w') as f:
     json.dump(c, f, indent=2)
 "
           fi
-          
+
           git config user.name "SoundVault Bot"
           git config user.email "bot@soundvault.app"
           git add VERSION config.json
@@ -62,13 +62,10 @@ with open('config.json', 'w') as f:
             --notes "Weekly release v$VERSION — includes latest fixes and improvements." \
             --generate-notes
 
-  build:
+  build-windows:
     needs: release
     if: needs.release.outputs.created == 'true'
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-latest
 
     steps:
       - uses: actions/checkout@v4
@@ -86,33 +83,189 @@ with open('config.json', 'w') as f:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build with PyInstaller
+      - name: Build portable .exe
         run: |
           python -m PyInstaller SoundVault.spec --noconfirm
+        shell: powershell
 
-      - name: Build NSIS installer (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Build NSIS installer
         run: |
           choco install nsis -y
           & "C:\Program Files (x86)\NSIS\Bin\makensis.exe" installer/installer.nsi
-          Copy-Item -Path "installer/SoundVault_Setup.exe" -Destination "dist/" -Force
+          Copy-Item -Path "installer/SoundVault_Setup.exe" -Destination "dist/SoundVault-${{ needs.release.outputs.version }}-Setup.exe" -Force
+        shell: powershell
 
-      - name: Build .dmg (macOS)
-        if: matrix.os == 'macos-latest'
+      - name: Build MSI installer
         run: |
-          bash scripts/build-macos-pkg.sh "${{ needs.release.outputs.version }}"
+          choco install wixtoolset -y
+          $env:Path += ";C:\Program Files (x86)\WiX Toolset v3.14\bin"
+          & candle installer/installer.wxs -o installer/installer.wixobj
+          & light installer/installer.wixobj -o "dist/SoundVault-${{ needs.release.outputs.version }}.msi"
+        shell: powershell
+        continue-on-error: true
 
-      - name: Build .AppImage (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq fuse libfuse2
-          bash scripts/build-linux.sh "${{ needs.release.outputs.version }}"
-
-      - name: Upload artifacts to release
+      - name: Upload Windows artifacts
         env:
           VERSION: ${{ needs.release.outputs.version }}
         run: |
+          gh release upload "v$env:VERSION" dist/*.exe dist/*.msi --clobber
+        shell: powershell
+
+  build-macos:
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build .app bundle
+        run: |
+          python -m PyInstaller SoundVault.spec --noconfirm
+
+      - name: Rename .app with version
+        run: |
           VERSION="${{ needs.release.outputs.version }}"
-          gh release upload "v$VERSION" dist/* --clobber
-        shell: bash
+          mv dist/SoundVault.app "dist/SoundVault-${VERSION}.app"
+
+      - name: Build .dmg
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          APP_NAME="SoundVault"
+          APP_BUNDLE="dist/${APP_NAME}-${VERSION}.app"
+          DMG_PATH="dist/${APP_NAME}-${VERSION}.dmg"
+
+          if command -v create-dmg &>/dev/null; then
+            create-dmg \
+              --volname "${APP_NAME}" \
+              --volicon "icon.ico" \
+              --window-pos 200 120 \
+              --window-size 600 400 \
+              --icon-size 100 \
+              --icon "${APP_BUNDLE}" 150 200 \
+              --app-drop-link 450 200 \
+              "${DMG_PATH}" \
+              "${APP_BUNDLE}" || true
+          fi
+
+          if [ ! -f "$DMG_PATH" ]; then
+            STAGING_DIR="dist/dmg-staging"
+            mkdir -p "${STAGING_DIR}"
+            cp -R "${APP_BUNDLE}" "${STAGING_DIR}/"
+            ln -s /Applications "${STAGING_DIR}/Applications"
+            hdiutil create -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" \
+              -ov -format UDZO -size 512m "${DMG_PATH}"
+            rm -rf "${STAGING_DIR}"
+          fi
+
+      - name: Build .pkg
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          APP_NAME="SoundVault"
+          APP_BUNDLE="dist/${APP_NAME}-${VERSION}.app"
+          PKG_DIR="/tmp/${APP_NAME}_pkg"
+          PKG_PATH="dist/${APP_NAME}-${VERSION}.pkg"
+
+          rm -rf "$PKG_DIR"
+          mkdir -p "$PKG_DIR"
+
+          COMPONENT_PKG="${PKG_DIR}/${APP_NAME}.pkg"
+          pkgbuild --root "$APP_BUNDLE" \
+            --identifier "com.soundvault.app" \
+            --version "$VERSION" \
+            --install-location "/Applications/${APP_NAME}.app" \
+            "$COMPONENT_PKG"
+
+          DIST_FILE="${PKG_DIR}/Distribution.xml"
+          cat > "$DIST_FILE" << EOF
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <title>${APP_NAME}</title>
+    <organization>com.soundvault</organization>
+    <product id="com.soundvault.app" version="${VERSION}" />
+    <pkg-ref id="com.soundvault.app">${APP_NAME}.pkg</pkg-ref>
+    <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+    <choices-outline>
+        <line choice="default">
+            <line choice="com.soundvault.app"/>
+        </line>
+    </choices-outline>
+    <choice id="default" title="${APP_NAME}" description="SoundVault Audio Library Manager">
+        <pkg-ref id="com.soundvault.app"/>
+    </choice>
+    <pkg-ref id="com.soundvault.app" onConclusion="none">${APP_NAME}.pkg</pkg-ref>
+</installer-gui-script>
+EOF
+
+          productbuild --distribution "$DIST_FILE" \
+            --package-path "$PKG_DIR" \
+            --version "$VERSION" \
+            "$PKG_PATH"
+
+          rm -rf "$PKG_DIR"
+
+      - name: Upload macOS artifacts
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          gh release upload "v$VERSION" dist/*.app dist/*.dmg dist/*.pkg --clobber
+
+  build-linux:
+    needs: release
+    if: needs.release.outputs.created == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fuse libfuse2 fakeroot dpkg-dev rpm
+
+      - name: Build .AppImage
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          bash scripts/build-linux.sh "$VERSION"
+
+      - name: Build .deb
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          bash scripts/build-linux-deb.sh "$VERSION"
+
+      - name: Build .rpm
+        run: |
+          VERSION="${{ needs.release.outputs.version }}"
+          bash scripts/build-linux-rpm.sh "$VERSION"
+
+      - name: Upload Linux artifacts
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          gh release upload "v$VERSION" dist/*.AppImage dist/*.deb dist/*.rpm --clobber

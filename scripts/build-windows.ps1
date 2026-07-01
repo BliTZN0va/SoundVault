@@ -1,6 +1,8 @@
 param(
-    [string]$Version = "1.0.2"
+    [string]$Version = (Get-Content -Path "$PSScriptRoot/../VERSION" -ErrorAction SilentlyContinue | Out-String).Trim()
 )
+
+if (-not $Version) { $Version = "1.0.4" }
 
 $ErrorActionPreference = "Stop"
 $ProjectDir = Split-Path -Parent $PSScriptRoot
