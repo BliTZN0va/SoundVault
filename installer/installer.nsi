@@ -1,5 +1,5 @@
 !define PRODUCT_NAME "SoundVault"
-!define PRODUCT_VERSION "1.0.6"
+!define PRODUCT_VERSION "1.0.5"
 !define PRODUCT_PUBLISHER "SoundVault"
 !define PRODUCT_WEB_SITE "https://github.com/GamerZ/soundvault"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\SoundVault.exe"
