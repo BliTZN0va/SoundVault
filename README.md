@@ -1,4 +1,4 @@
-# SoundVault ![Version](https://img.shields.io/badge/version-1.0.5-blue)
+# SoundVault ![Version](https://img.shields.io/badge/version-1.0.7-blue)
 
 Audio asset manager for content creators — catalog, tag, preview, and track usage of SFX, music, and voice clips across projects. Ships as a native desktop app for Windows, macOS, and Linux.
 
