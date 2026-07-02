@@ -37,7 +37,18 @@ def load_config():
             "data_file": "data.json",
             "backup_folder": "database",
             "tag_colors": {},
-            "theme": "dark"
+            "theme": "dark",
+            "font_size": 13,
+            "glass_blur": 16,
+            "glass_opacity": 55,
+            "anim_speed": 100,
+            "compact": False,
+            "bg_style": "gradient",
+            "bg_gradient": "default",
+            "bg_solid": "#0b0916",
+            "bg_image": "",
+            "bg_opacity": 30,
+            "accent": ""
         }
         os.makedirs(DATA_DIR, exist_ok=True)
         with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
@@ -509,7 +520,7 @@ def get_config():
 def update_config():
     config = load_config()
     updates = request.json
-    allowed_fields = ['music_folder', 'data_file', 'backup_folder', 'auto_detect', 'auto_detect_extensions', 'tag_colors', 'theme']
+    allowed_fields = ['music_folder', 'data_file', 'backup_folder', 'auto_detect', 'auto_detect_extensions', 'tag_colors', 'theme', 'font_size', 'glass_blur', 'glass_opacity', 'anim_speed', 'compact', 'bg_style', 'bg_gradient', 'bg_solid', 'bg_image', 'bg_opacity', 'accent']
     for key in updates:
         if key not in allowed_fields:
             return jsonify({"error": f"Invalid config field: {key}"}), 400
