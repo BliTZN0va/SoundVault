@@ -10,11 +10,12 @@ permissions:
   pull-requests: write
 
 env:
-  AI_PROVIDER: ${{ vars.AI_PROVIDER || 'openai' }}
-  AI_MODEL: ${{ vars.AI_MODEL || 'gpt-4o-mini' }}
+  AI_PROVIDER: ${{ vars.AI_PROVIDER || 'ollama' }}
+  AI_MODEL: ${{ vars.AI_MODEL || 'llama3.2' }}
+  AI_ENDPOINT: ${{ vars.AI_ENDPOINT || 'http://localhost:11434' }}
 
 jobs:
-  analyze-and-fix:
+  analyze:
     if: contains(github.event.issue.labels.*.name, 'feedback') || contains(github.event.issue.labels.*.name, 'bug')
     runs-on: ubuntu-latest
 
@@ -39,21 +40,14 @@ jobs:
             --title "${{ github.event.issue.title }}" \
             --body "${{ github.event.issue.body }}" \
             --number ${{ github.event.issue.number }}
-          echo "changelog=$(python -c "import json; d=json.load(open('analysis_output.json')); print(d.get('changelog','fix: auto-fix from issue #${{ github.event.issue.number }}'))")" >> "$GITHUB_OUTPUT"
-          echo "severity=$(python -c "import json; d=json.load(open('analysis_output.json')); print(d.get('severity','unknown'))")" >> "$GITHUB_OUTPUT"
-          echo "summary=$(python -c "import json; d=json.load(open('analysis_output.json')); print(d.get('summary','No summary'))")" >> "$GITHUB_OUTPUT"
-          echo "changes_count=$(python -c "import json; d=json.load(open('analysis_output.json')); print(len(d.get('code_changes',[])))")" >> "$GITHUB_OUTPUT"
 
       - name: Post AI analysis comment
         uses: actions/github-script@v7
-        env:
-          PROVIDER: ${{ env.AI_PROVIDER }}
-          MODEL: ${{ env.AI_MODEL }}
-          CHANGES_COUNT: ${{ steps.analyze.outputs.changes_count }}
+        id: comment
         with:
           script: |
             const fs = require('fs');
-            let analysis = { summary: '', code_changes: [], severity: 'unknown', suggested_fix: '', changelog: '' };
+            let analysis = { summary: '', code_changes: [], severity: 'unknown', suggested_fix: '' };
             try {
               const data = fs.readFileSync('analysis_output.json', 'utf8');
               analysis = JSON.parse(data);
@@ -64,122 +58,66 @@ jobs:
             const labels = context.payload.issue.labels.map(l => l.name);
             const isBug = labels.includes('bug');
 
-            let comment = '## AI Feedback Analysis\n\n';
+            let comment = '## 🤖 AI Feedback Analysis\n\n';
             comment += `**Severity:** ${analysis.severity || 'unknown'}\n\n`;
             comment += `**Summary:**\n${analysis.summary || 'No summary provided.'}\n\n`;
 
             if (analysis.code_changes && analysis.code_changes.length > 0) {
-              comment += '### Code Changes Applied\n\n';
+              comment += '### Suggested Code Changes\n\n';
               for (const change of analysis.code_changes) {
-                comment += `- **${change.file}** — ${change.description}\n`;
+                comment += `**File:** \`${change.file}\`\n`;
+                if (change.description) comment += `${change.description}\n`;
+                comment += '```diff\n';
+                comment += change.diff || 'No diff provided.';
+                comment += '\n```\n\n';
               }
-              comment += '\n';
             }
 
-            if (analysis.changelog) {
-              comment += `**Changelog:** ${analysis.changelog}\n`;
+            if (analysis.suggested_fix) {
+              comment += `### Suggested Fix\n\n${analysis.suggested_fix}\n`;
             }
 
             comment += '\n---\n';
-            comment += `_Powered by ${process.env.PROVIDER || 'AI'} | Model: ${process.env.MODEL || 'default'}_`;
+            comment += `_Analysis powered by ${process.env.AI_PROVIDER || 'ollama'} | Model: ${process.env.AI_MODEL || 'llama3.2'}_`;
 
-            await github.rest.issues.createComment({
+            const { data: createdComment } = await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: context.issue.number,
               body: comment
             });
 
-      - name: Apply fixes to repo
+            return analysis;
+
+      - name: Create fix PR for bug reports
+        if: contains(github.event.issue.labels.*.name, 'bug')
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          python .github/workflows/apply_fixes.py analysis_output.json
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          BRANCH="fix/auto-issue-${ISSUE_NUMBER}"
+          TIMESTAMP=$(date +%s)
 
-      - name: Check if files were modified
-        id: check_changes
-        run: |
-          if [ -f modified_files.txt ] && [ -s modified_files.txt ] && [ -n "$(git diff --stat)" ]; then
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          git config user.name "SoundVault AI Reviewer"
+          git config user.email "actions@github.com"
+          git checkout -b "${BRANCH}"
+
+          if [ -f "analysis_output.json" ]; then
+            python .github/workflows/apply_fixes.py analysis_output.json
           fi
 
-      - name: Bump version and commit
-        if: steps.check_changes.outputs.has_changes == 'true'
-        id: bump
-        run: |
-          VERSION_FILE="VERSION"
-          if [ -f "$VERSION_FILE" ]; then
-            VERSION=$(cat "$VERSION_FILE" | tr -d '\n\r')
-          else
-            VERSION="1.0.0"
-          fi
-          echo "Current version: $VERSION"
-
-          IFS='.' read -r major minor patch <<< "$VERSION"
-          patch=$((patch + 1))
-          NEW_VERSION="${major}.${minor}.${patch}"
-          echo "New version: $NEW_VERSION"
-          echo "$NEW_VERSION" > "$VERSION_FILE"
-          echo "version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-
-          if [ -f config.json ]; then
-            python3 -c "
-import json
-with open('config.json') as f:
-    c = json.load(f)
-c['version'] = '$NEW_VERSION'
-with open('config.json', 'w') as f:
-    json.dump(c, f, indent=2)
-"
+          if git diff --quiet; then
+            echo "No changes to commit — skipping PR creation."
+            exit 0
           fi
 
-          if [ -f installer/installer.nsi ]; then
-            sed -i "s/!define PRODUCT_VERSION \".*\"/!define PRODUCT_VERSION \"$NEW_VERSION\"/" installer/installer.nsi
-          fi
-
-          git config user.name "SoundVault AI"
-          git config user.email "ai@soundvault.bot"
           git add -A
+          git commit -m "Auto-fix: apply suggested changes for issue #${ISSUE_NUMBER}"
+          git push origin "${BRANCH}"
 
-          CHANGELOG="${{ steps.analyze.outputs.changelog }}"
-          FEAT_SUMMARY="${{ steps.analyze.outputs.summary }}"
-          COMMIT_MSG="v${NEW_VERSION}: ${CHANGELOG}
-
-          Auto-fix from issue #${{ github.event.issue.number }}: ${FEAT_SUMMARY}"
-
-          git commit -m "${COMMIT_MSG}"
-          git tag -a "v${NEW_VERSION}" -m "${CHANGELOG}"
-          git push origin HEAD && git push origin "v${NEW_VERSION}"
-          echo "pushed=true" >> "$GITHUB_OUTPUT"
-
-      - name: Post tag confirmation comment
-        if: steps.bump.outputs.pushed == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const version = '${{ steps.bump.outputs.version }}';
-            const changelog = '${{ steps.analyze.outputs.changelog }}';
-
-            const comment = `## Fix Applied & Released\n\n` +
-              `**Tag:** [v${version}](https://github.com/${context.repo.owner}/${context.repo.repo}/releases/tag/v${version})\n\n` +
-              `**What changed:** ${changelog}\n\n` +
-              `_This fix was automatically applied and released by the AI Feedback system._`;
-
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: comment
-            });
-
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              labels: ['auto-fixed']
-            });
-
-      - name: No changes — skip
-        if: steps.check_changes.outputs.has_changes != 'true'
-        run: |
-          echo "No code changes were applied. The AI either found no fixes or couldn't match source code."
+          gh pr create \
+            --title "Fix: address issue #${ISSUE_NUMBER}" \
+            --body "## 🤖 Auto-generated Fix PR\n\nThis PR was automatically created by the AI Feedback Review workflow in response to issue #${ISSUE_NUMBER}.\n\n**Issue:** ${{ github.event.issue.title }}\n\nPlease review the changes carefully before merging." \
+            --base "${{ github.ref_name }}" \
+            --head "${BRANCH}" \
+            --label "auto-pr"
