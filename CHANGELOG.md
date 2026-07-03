@@ -4,6 +4,17 @@ All notable changes to SoundVault will be documented in this file.
 
 ---
 
+## [1.0.8] - 2026-07-03
+
+### Fixed
+- **Volume icon rendering** — the speaker icon in the player bar now displays the correct glyph (🔇/🔈/🔉/🔊) instead of the literal text `&#128263;` etc. Was assigning HTML entities via `textContent`, which doesn't decode them.
+- **Play/pause button glyph** — now renders ▶/⏸ correctly for the same reason.
+- **Playback failures** — `player.play()` rejections (autoplay blocked, codec error, missing file) are now caught and surfaced as a toast instead of failing silently.
+- **Tag XSS via import** — track tag values rendered in the track list are now HTML-escaped, preventing injected markup from a malicious import/backup file.
+- **Switch-case `const` declarations** — the keyboard arrow-up/down cases now use a block scope so the `const` declarations don't leak across cases (avoids TDZ issues in strict mode).
+
+---
+
 ## [1.0.7] - 2026-07-02
 
 ### Fixed
@@ -18,13 +29,6 @@ All notable changes to SoundVault will be documented in this file.
 - Theme switching (`setTheme`) now re-applies the current background style after changing themes.
 - Appearance settings (font size, glass blur, glass opacity, animation speed, compact mode, background style/gradient/solid/image, opacity, accent) are now saved to the server config for persistence between sessions.
 - Default config now includes all appearance settings with sensible defaults.
-
----
-
-## [1.0.6] - 2026-07-02
-
-### Changed
-- Version bump for CI pipeline updates.
 
 ---
 

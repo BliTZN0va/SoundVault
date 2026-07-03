@@ -1285,6 +1285,10 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: calc(10px * v
   </div>
   <div class="sidebar-footer">
     <button type="button" class="theme-btn" onclick="toggleTheme()"><span class="icon" id="theme-icon">&#9790;</span><span id="theme-label">Dark</span></button>
+    <a class="theme-btn gh-btn" href="https://github.com/BliTZN0va/SoundVault" target="_blank" title="SoundVault on GitHub" style="text-decoration:none">
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8a8 8 0 005.47 7.59c.4.08.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2 .37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.64 7.64 0 014 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      <span>GitHub</span>
+    </a>
     <button type="button" class="filter-btn" onclick="openSettingsModal()">Settings</button>
   </div>
 </sidebar>
@@ -1709,7 +1713,7 @@ function renderTracks() {
     '<div class="track-info">' +
     '<div class="track-title">' + esc(t.title) + '</div>' +
     '<div class="track-artist">' + esc(t.artist) + '</div>' +
-    '<div class="track-tags">' + (t.tags || []).map(tag => '<span class="tag-pill" style="background:' + tagColor(tag) + '">' + tag + '</span>').join('') + '</div>' +
+    '<div class="track-tags">' + (t.tags || []).map(tag => '<span class="tag-pill" style="background:' + tagColor(tag) + '">' + esc(tag) + '</span>').join('') + '</div>' +
     ((t.episodes || []).length ? '<div class="track-episodes">' + (t.episodes || []).map(ep => '<span class="ep-pill">' + esc(ep) + '</span>').join('') + '</div>' : '') +
     (t.notes ? '<div class="track-notes">' + esc(t.notes) + '</div>' : '') +
     (t.location ? '<div class="track-location">' + esc(t.location.split('\\').pop()) + '</div>' : '') +
@@ -1741,14 +1745,14 @@ async function playTrack(id) {
   const player = document.getElementById('audio-player');
   player.src = '/api/tracks/' + id + '/download';
   player.volume = document.getElementById('volume-slider').value / 100;
-  player.play();
+  player.play().catch(err => { if (err && err.name !== 'AbortError') showToast('Playback failed: ' + (err.message || err), 'error'); });
   updatePlayButton();
 }
 
 function togglePlay() {
   const player = document.getElementById('audio-player');
   if (player.paused && player.src) {
-    player.play();
+    player.play().catch(err => { if (err && err.name !== 'AbortError') showToast('Playback failed: ' + (err.message || err), 'error'); });
   } else {
     player.pause();
   }
@@ -1757,7 +1761,7 @@ function togglePlay() {
 
 function updatePlayButton() {
   const player = document.getElementById('audio-player');
-  document.getElementById('play-pause-btn').textContent = player.paused ? '&#9654;' : '&#9208;';
+  document.getElementById('play-pause-btn').innerHTML = player.paused ? '&#9654;' : '&#9208;';
 }
 
 function onTrackEnded() {
@@ -1810,10 +1814,10 @@ function formatTime(s) {
 function setVolume(v) {
   document.getElementById('audio-player').volume = v / 100;
   const icon = document.getElementById('volume-icon');
-  if (v == 0) icon.textContent = '&#128263;';
-  else if (v < 40) icon.textContent = '&#128264;';
-  else if (v < 70) icon.textContent = '&#128265;';
-  else icon.textContent = '&#128266;';
+  if (v == 0) icon.innerHTML = '&#128263;';
+  else if (v < 40) icon.innerHTML = '&#128264;';
+  else if (v < 70) icon.innerHTML = '&#128265;';
+  else icon.innerHTML = '&#128266;';
 }
 
 function toggleMute() {
@@ -2660,8 +2664,8 @@ document.addEventListener('keydown', (e) => {
       break;
     case 'arrowleft': { const p = document.getElementById('audio-player'); if (p && p.duration) p.currentTime = Math.max(0, p.currentTime - 5); } break;
     case 'arrowright': { const p = document.getElementById('audio-player'); if (p && p.duration) p.currentTime = Math.min(p.duration, p.currentTime + 5); } break;
-    case 'arrowup': e.preventDefault(); const vol = document.getElementById('volume-slider'); vol.value = Math.min(100, parseInt(vol.value) + 5); setVolume(vol.value); break;
-    case 'arrowdown': e.preventDefault(); const vold = document.getElementById('volume-slider'); vold.value = Math.max(0, parseInt(vold.value) - 5); setVolume(vold.value); break;
+    case 'arrowup': { e.preventDefault(); const vol = document.getElementById('volume-slider'); vol.value = Math.min(100, parseInt(vol.value) + 5); setVolume(vol.value); } break;
+    case 'arrowdown': { e.preventDefault(); const vold = document.getElementById('volume-slider'); vold.value = Math.max(0, parseInt(vold.value) - 5); setVolume(vold.value); } break;
   }
 });
 
