@@ -4,6 +4,18 @@ All notable changes to SoundVault will be documented in this file.
 
 ---
 
+## [1.0.9] - 2026-07-06
+
+### Added
+- **List/Grid view toggle** — switch between a detailed list layout and a compact grid/card layout for track browsing. Toggle via toolbar button or press `G`. Preference is saved between sessions.
+- **Collapsible sidebar sections** — each sidebar section (View, By Tag, By Folder, By Episode) can be collapsed/expanded independently by clicking the section header. Collapsed state persists between sessions.
+- **9 new audio file formats** — auto-detect support added for `.opus`, `.aiff`, `.aif`, `.wv`, `.mid`, `.midi`, and `.webm` (MIME maps updated for drag-and-drop compatibility).
+
+### Changed
+- Keyboard shortcuts modal now includes `S` (select mode) and `G` (grid view) shortcuts.
+
+---
+
 ## [1.0.8] - 2026-07-03
 
 ### Fixed

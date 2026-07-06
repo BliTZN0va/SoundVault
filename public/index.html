@@ -1228,6 +1228,87 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: calc(10px * v
 .batch-bar .batch-btn:hover { background: rgba(255, 255, 255, 0.25) }
 
 .track-select { width: 14px; height: 14px; accent-color: var(--accent); cursor: pointer; margin-top: 2px }
+
+.sidebar-section-header {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  cursor: pointer;
+  padding: 2px 10px 2px 6px;
+  user-select: none;
+  border-radius: var(--radius-sm);
+  margin: 0 4px;
+}
+.sidebar-section-header:hover { background: rgba(var(--bg-elevated-r), var(--bg-elevated-g), var(--bg-elevated-b), var(--glass-a)) }
+.sidebar-section-header .section-arrow {
+  font-size: calc(7px * var(--font-scale));
+  color: var(--muted2);
+  transition: transform calc(0.15s * var(--anim-speed));
+  width: 10px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.sidebar-section-header .sidebar-label { padding: 4px 0 0 0; flex: 1 }
+.sidebar-section.collapsed .section-arrow { transform: rotate(-90deg) }
+.sidebar-section.collapsed .sidebar-section-content { display: none }
+.sidebar-section.collapsed .sidebar-label { color: var(--muted2) !important }
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.view-toggle-btn .v-icon {
+  font-size: calc(13px * var(--font-scale));
+  line-height: 1;
+}
+
+.track-list.grid-view #tracks-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 6px;
+  padding: 4px 0;
+}
+.track-list.grid-view .track-card {
+  grid-template-columns: 1fr;
+  gap: 6px;
+  padding: 10px 12px;
+  justify-items: center;
+  text-align: center;
+}
+.track-list.grid-view .track-card .star-btn {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  margin: 0;
+}
+.track-list.grid-view .track-card .track-info { text-align: center; width: 100% }
+.track-list.grid-view .track-card .track-title { font-size: calc(12px * var(--font-scale)) }
+.track-list.grid-view .track-card .track-artist { font-size: calc(10px * var(--font-scale)) }
+.track-list.grid-view .track-card .track-tags { justify-content: center }
+.track-list.grid-view .track-card .track-episodes { justify-content: center }
+.track-list.grid-view .track-card .track-actions {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.track-list.grid-view .track-card .track-location { text-align: center }
+.track-card-icon { display: none }
+.track-list.grid-view .track-card-icon {
+  display: block;
+  font-size: calc(28px * var(--font-scale));
+  opacity: 0.5;
+  margin-bottom: 2px;
+  color: var(--accent);
+}
+.track-list.grid-view .track-select {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+}
+
+body.compact .track-list.grid-view #tracks-container { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 4px }
+body.compact .track-list.grid-view .track-card { padding: 6px 8px }
+body.compact .track-list.grid-view .track-card-icon { font-size: calc(22px * var(--font-scale)) }
 </style>
 </head>
 <body>
@@ -1263,25 +1344,45 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: calc(10px * v
 
 <div class="layout">
 <sidebar id="sidebar">
-  <div class="sidebar-section">
-    <div class="sidebar-label">View</div>
+  <div class="sidebar-section" id="sec-view">
+    <div class="sidebar-section-header" onclick="toggleSidebarSection('view')">
+      <span class="section-arrow">&#9660;</span>
+      <span class="sidebar-label">View</span>
+    </div>
+    <div class="sidebar-section-content">
     <button type="button" class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All Tracks <span class="count" id="count-all">0</span></button>
     <button type="button" class="filter-btn" data-filter="starred" onclick="setFilter('starred',this)">Starred <span class="count" id="count-starred">0</span></button>
     <button type="button" class="filter-btn" data-filter="unused" onclick="setFilter('unused',this)">Unused <span class="count" id="count-unused">0</span></button>
     <button type="button" class="filter-btn" data-filter="used" onclick="setFilter('used',this)">Used <span class="count" id="count-used">0</span></button>
+    </div>
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-label">By Tag</div>
+  <div class="sidebar-section" id="sec-tags">
+    <div class="sidebar-section-header" onclick="toggleSidebarSection('tags')">
+      <span class="section-arrow">&#9660;</span>
+      <span class="sidebar-label">By Tag</span>
+    </div>
+    <div class="sidebar-section-content">
     <div style="padding:2px 10px 4px"><input class="form-input" type="text" id="tag-search" placeholder="Search tags..." oninput="renderTagFilters()" style="font-size:10px;padding:4px 6px"></div>
     <div id="tag-filters"></div>
+    </div>
   </div>
-  <div class="sidebar-section">
-    <div class="sidebar-label">By Folder</div>
+  <div class="sidebar-section" id="sec-folders">
+    <div class="sidebar-section-header" onclick="toggleSidebarSection('folders')">
+      <span class="section-arrow">&#9660;</span>
+      <span class="sidebar-label">By Folder</span>
+    </div>
+    <div class="sidebar-section-content">
     <div id="folder-browser"><div class="sidebar-label" style="padding-left:14px;color:var(--muted2);font-size:10px">Loading...</div></div>
+    </div>
   </div>
-  <div class="sidebar-section" id="ep-sidebar-section">
-    <div class="sidebar-label">By Episode</div>
+  <div class="sidebar-section" id="sec-episodes" id="ep-sidebar-section">
+    <div class="sidebar-section-header" onclick="toggleSidebarSection('episodes')">
+      <span class="section-arrow">&#9660;</span>
+      <span class="sidebar-label">By Episode</span>
+    </div>
+    <div class="sidebar-section-content">
     <div id="ep-filters"></div>
+    </div>
   </div>
   <div class="sidebar-footer">
     <button type="button" class="theme-btn" onclick="toggleTheme()"><span class="icon" id="theme-icon">&#9790;</span><span id="theme-label">Dark</span></button>
@@ -1306,6 +1407,7 @@ body.compact .folder-item { padding: 2px 14px 2px 22px; font-size: calc(10px * v
       <option value="artist">Artist</option>
       <option value="id">Date</option>
     </select>
+    <button type="button" class="btn view-toggle-btn" onclick="toggleViewMode()" id="view-toggle-btn" title="Toggle list/grid view (G)"><span class="v-icon">&#9638;</span></button>
     <button type="button" class="btn" onclick="toggleSelectMode()" id="select-mode-btn">Select</button>
     <button type="button" class="btn btn-primary" onclick="openModal()">+ Add</button>
     <button type="button" class="btn" onclick="rescan()">Scan</button>
@@ -1560,6 +1662,8 @@ async function load() {
   player.volume = document.getElementById('volume-slider').value / 100;
 
   applySavedTheme();
+  applySavedSidebar();
+  applySavedView();
 }
 
 function renderAll() {
@@ -1710,6 +1814,7 @@ function renderTracks() {
   c.innerHTML = filtered.map(t =>
     '<div class="track-card ' + (t.used ? 'used-card' : '') + (selectedIds.has(t.id) ? ' selected' : '') + ' drag-source" id="card-' + t.id + '" draggable="true" oncontextmenu="showContextMenu(event,' + t.id + ')" ondragstart="startDrag(event,' + t.id + ')" onclick="handleCardClick(event,' + t.id + ')">' +
     (selectMode ? '<input type="checkbox" class="track-select" ' + (selectedIds.has(t.id) ? 'checked' : '') + ' onchange="toggleSelect(' + t.id + ')">' : '<button type="button" class="star-btn ' + (t.starred ? 'starred' : '') + '" onclick="toggleStar(' + t.id + ')">&#9733;</button>') +
+    '<div class="track-card-icon">&#9835;</div>' +
     '<div class="track-info">' +
     '<div class="track-title">' + esc(t.title) + '</div>' +
     '<div class="track-artist">' + esc(t.artist) + '</div>' +
@@ -2117,7 +2222,9 @@ function mimeFromExt(filename) {
   const map = {
     '.mp3': 'audio/mpeg', '.mp4': 'audio/mp4', '.wav': 'audio/wav',
     '.flac': 'audio/flac', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg',
-    '.aac': 'audio/aac', '.wma': 'audio/x-ms-wma'
+    '.aac': 'audio/aac', '.wma': 'audio/x-ms-wma', '.opus': 'audio/opus',
+    '.aiff': 'audio/aiff', '.aif': 'audio/aiff', '.wv': 'audio/wavpack',
+    '.mid': 'audio/midi', '.midi': 'audio/midi', '.webm': 'audio/webm'
   };
   const ext = filename ? '.' + filename.split('.').pop().toLowerCase() : '';
   return map[ext] || 'application/octet-stream';
@@ -2339,6 +2446,49 @@ function applySavedTheme() {
   document.getElementById('appearance-compact').checked = isCompact;
   document.body.classList.toggle('compact', isCompact);
   applyBgStyle();
+}
+
+function toggleSidebarSection(name) {
+  const el = document.getElementById('sec-' + name);
+  if (!el) return;
+  el.classList.toggle('collapsed');
+  const sections = {};
+  document.querySelectorAll('.sidebar-section').forEach(sec => {
+    const id = sec.id;
+    if (id && id.startsWith('sec-')) {
+      sections[id.replace('sec-', '')] = sec.classList.contains('collapsed');
+    }
+  });
+  localStorage.setItem('soundvault-sidebar', JSON.stringify(sections));
+}
+
+function applySavedSidebar() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('soundvault-sidebar') || '{}');
+    Object.keys(saved).forEach(name => {
+      if (saved[name]) {
+        const el = document.getElementById('sec-' + name);
+        if (el) el.classList.add('collapsed');
+      }
+    });
+  } catch(e) {}
+}
+
+function toggleViewMode() {
+  const list = document.querySelector('.track-list');
+  const isGrid = list.classList.toggle('grid-view');
+  localStorage.setItem('soundvault-view', isGrid ? 'grid' : 'list');
+  document.getElementById('view-toggle-btn').querySelector('.v-icon').innerHTML = isGrid ? '&#9776;' : '&#9638;';
+  renderTracks();
+}
+
+function applySavedView() {
+  const saved = localStorage.getItem('soundvault-view') || 'list';
+  const list = document.querySelector('.track-list');
+  if (saved === 'grid') {
+    list.classList.add('grid-view');
+    document.getElementById('view-toggle-btn').querySelector('.v-icon').innerHTML = '&#9776;';
+  }
 }
 
 const GRADIENTS = {
@@ -2653,6 +2803,7 @@ document.addEventListener('keydown', (e) => {
     case 'k': nextTrack(); break;
     case 'n': openModal(); break;
     case 's': if (!(e.ctrlKey || e.metaKey)) toggleSelectMode(); break;
+    case 'g': if (!(e.ctrlKey || e.metaKey)) toggleViewMode(); break;
     case '?': if (e.shiftKey) document.getElementById('shortcuts-modal-overlay').classList.remove('hidden'); break;
     case '/': document.getElementById('shortcuts-modal-overlay').classList.remove('hidden'); break;
     case 'f': if (e.ctrlKey || e.metaKey) { e.preventDefault(); document.getElementById('search-input').focus(); } break;
@@ -2682,6 +2833,8 @@ load();
     <div class="shortcut-desc"><span class="shortcut-key">J</span> Previous track</div>
     <div class="shortcut-desc"><span class="shortcut-key">K</span> Next track</div>
     <div class="shortcut-desc"><span class="shortcut-key">N</span> Add new track</div>
+    <div class="shortcut-desc"><span class="shortcut-key">S</span> Toggle select mode</div>
+    <div class="shortcut-desc"><span class="shortcut-key">G</span> Toggle grid view</div>
     <div class="shortcut-desc"><span class="shortcut-key">Ctrl+F</span> Focus search</div>
     <div class="shortcut-desc"><span class="shortcut-key">?</span> Show shortcuts</div>
     <div class="shortcut-desc"><span class="shortcut-key">&#8592;</span> Rewind 5s</div>

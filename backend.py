@@ -33,7 +33,7 @@ def load_config():
         default_config = {
             "music_folder": "music",
             "auto_detect": True,
-            "auto_detect_extensions": [".mp3", ".mp4", ".wav", ".flac", ".m4a", ".ogg", ".aac", ".wma"],
+            "auto_detect_extensions": [".mp3", ".mp4", ".wav", ".flac", ".m4a", ".ogg", ".aac", ".wma", ".opus", ".aiff", ".aif", ".wv", ".mid", ".midi", ".webm"],
             "data_file": "data.json",
             "backup_folder": "database",
             "tag_colors": {},
