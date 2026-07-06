@@ -1,0 +1,222 @@
+name: Backfill Releases
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Tag version (e.g. 1.0.5)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build portable .exe
+        run: python -m PyInstaller SoundVault.spec --noconfirm
+
+      - name: Build NSIS installer
+        continue-on-error: true
+        run: |
+          choco install nsis -y
+          & "C:\Program Files (x86)\NSIS\Bin\makensis.exe" installer/installer.nsi
+          Copy-Item "installer/SoundVault_Setup.exe" "dist/SoundVault-${{ inputs.version }}-Setup.exe" -Force
+
+      - name: Build MSI installer
+        continue-on-error: true
+        run: |
+          choco install wixtoolset -y
+          & candle installer/installer.wxs -o installer/installer.wixobj
+          & light installer/installer.wixobj -o "dist/SoundVault-${{ inputs.version }}.msi"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-${{ inputs.version }}
+          path: |
+            dist/SoundVault.exe
+            dist/SoundVault-*-Setup.exe
+            dist/SoundVault-*.msi
+
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Build .app bundle
+        run: python -m PyInstaller SoundVault.spec --noconfirm
+
+      - name: Build .dmg
+        run: |
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          APP_BUNDLE="dist/${APP_NAME}.app"
+          DMG_PATH="dist/${APP_NAME}-${VERSION}.dmg"
+          STAGING_DIR="dist/dmg-staging"
+          mkdir -p "${STAGING_DIR}"
+          cp -R "${APP_BUNDLE}" "${STAGING_DIR}/"
+          ln -s /Applications "${STAGING_DIR}/Applications"
+          hdiutil create -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" \
+            -ov -format UDZO -size 512m "${DMG_PATH}"
+          rm -rf "${STAGING_DIR}"
+
+      - name: Build .pkg
+        run: |
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          APP_BUNDLE="dist/${APP_NAME}.app"
+          PKG_DIR="/tmp/${APP_NAME}_pkg"
+          PKG_PATH="dist/${APP_NAME}-${VERSION}.pkg"
+          rm -rf "$PKG_DIR"
+          mkdir -p "$PKG_DIR"
+          COMPONENT_PKG="${PKG_DIR}/${APP_NAME}.pkg"
+          pkgbuild --root "$APP_BUNDLE" \
+            --identifier "com.soundvault.app" \
+            --version "$VERSION" \
+            --install-location "/Applications/${APP_NAME}.app" \
+            "$COMPONENT_PKG"
+          DIST_FILE="${PKG_DIR}/Distribution.xml"
+          cat > "$DIST_FILE" << EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <installer-gui-script minSpecVersion="2">
+              <title>${APP_NAME}</title>
+              <organization>com.soundvault</organization>
+              <product id="com.soundvault.app" version="${VERSION}" />
+              <pkg-ref id="com.soundvault.app">${APP_NAME}.pkg</pkg-ref>
+              <options customize="never" require-scripts="false" hostArchitectures="x86_64,arm64"/>
+              <choices-outline>
+                  <line choice="default">
+                      <line choice="com.soundvault.app"/>
+                  </line>
+              </choices-outline>
+              <choice id="default" title="${APP_NAME}" description="SoundVault Audio Library Manager">
+                  <pkg-ref id="com.soundvault.app"/>
+              </choice>
+              <pkg-ref id="com.soundvault.app" onConclusion="none">${APP_NAME}.pkg</pkg-ref>
+          </installer-gui-script>
+          EOF
+          productbuild --distribution "$DIST_FILE" \
+            --package-path "$PKG_DIR" \
+            --version "$VERSION" \
+            "$PKG_PATH"
+          rm -rf "$PKG_DIR"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ inputs.version }}
+          path: |
+            dist/*.dmg
+            dist/*.pkg
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller
+
+      - name: Install packaging tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fuse libfuse2 fakeroot dpkg-dev rpm
+
+      - name: Build .AppImage
+        run: |
+          chmod +x scripts/build-linux.sh
+          bash scripts/build-linux.sh "${{ inputs.version }}"
+
+      - name: Build .deb
+        run: |
+          chmod +x scripts/build-linux-deb.sh
+          bash scripts/build-linux-deb.sh "${{ inputs.version }}"
+
+      - name: Build .rpm
+        run: |
+          chmod +x scripts/build-linux-rpm.sh
+          bash scripts/build-linux-rpm.sh "${{ inputs.version }}"
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ inputs.version }}
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+
+  upload-to-release:
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+          path: dist/
+
+      - name: List artifacts
+        run: ls -la dist/
+
+      - name: Upload to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ inputs.version }}"
+          REPO="${{ github.repository }}"
+
+          # Check if release exists, create if not (don't fail)
+          if ! gh release view "v$VERSION" -R "$REPO" &>/dev/null; then
+            echo "Release v$VERSION does not exist, creating..."
+            gh release create "v$VERSION" \
+              -R "$REPO" \
+              --title "SoundVault v$VERSION" \
+              --notes "SoundVault v$VERSION release." \
+              --generate-notes || true
+          fi
+
+          echo "Uploading artifacts to v$VERSION..."
+          gh release upload "v$VERSION" dist/* -R "$REPO" --clobber
+          echo "Done!"
