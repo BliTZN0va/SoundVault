@@ -74,14 +74,52 @@ jobs:
           pip install -r requirements.txt
           pip install pyinstaller
 
-      - name: Build .app bundle
+      - name: Build executable
         run: python -m PyInstaller SoundVault.spec --noconfirm
+
+      - name: Create .app bundle
+        run: |
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          EXE_PATH="dist/${APP_NAME}"
+          APP_BUNDLE="dist/${APP_NAME}-${VERSION}.app"
+          mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+          mkdir -p "${APP_BUNDLE}/Contents/Resources"
+          cp "${EXE_PATH}" "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
+          chmod +x "${APP_BUNDLE}/Contents/MacOS/${APP_NAME}"
+          cat > "${APP_BUNDLE}/Contents/Info.plist" << EOF
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>${APP_NAME}</string>
+              <key>CFBundleName</key>
+              <string>${APP_NAME}</string>
+              <key>CFBundleDisplayName</key>
+              <string>${APP_NAME}</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.soundvault.app</string>
+              <key>CFBundleShortVersionString</key>
+              <string>${VERSION}</string>
+              <key>CFBundleVersion</key>
+              <string>${VERSION}</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleSignature</key>
+              <string>????</string>
+              <key>NSHighResolutionCapable</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          echo "Created ${APP_BUNDLE}"
 
       - name: Build .dmg
         run: |
           VERSION="${{ inputs.version }}"
           APP_NAME="SoundVault"
-          APP_BUNDLE="dist/${APP_NAME}.app"
+          APP_BUNDLE="dist/${APP_NAME}-${VERSION}.app"
           DMG_PATH="dist/${APP_NAME}-${VERSION}.dmg"
           STAGING_DIR="dist/dmg-staging"
           mkdir -p "${STAGING_DIR}"
@@ -90,12 +128,13 @@ jobs:
           hdiutil create -volname "${APP_NAME}" -srcfolder "${STAGING_DIR}" \
             -ov -format UDZO -size 512m "${DMG_PATH}"
           rm -rf "${STAGING_DIR}"
+          echo "Created ${DMG_PATH}"
 
       - name: Build .pkg
         run: |
           VERSION="${{ inputs.version }}"
           APP_NAME="SoundVault"
-          APP_BUNDLE="dist/${APP_NAME}.app"
+          APP_BUNDLE="dist/${APP_NAME}-${VERSION}.app"
           PKG_DIR="/tmp/${APP_NAME}_pkg"
           PKG_PATH="dist/${APP_NAME}-${VERSION}.pkg"
           rm -rf "$PKG_DIR"
@@ -104,7 +143,7 @@ jobs:
           pkgbuild --root "$APP_BUNDLE" \
             --identifier "com.soundvault.app" \
             --version "$VERSION" \
-            --install-location "/Applications/${APP_NAME}.app" \
+            --install-location "/Applications/${APP_NAME}-${VERSION}.app" \
             "$COMPONENT_PKG"
           DIST_FILE="${PKG_DIR}/Distribution.xml"
           cat > "$DIST_FILE" << EOF
@@ -131,6 +170,7 @@ jobs:
             --version "$VERSION" \
             "$PKG_PATH"
           rm -rf "$PKG_DIR"
+          echo "Created ${PKG_PATH}"
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -163,20 +203,196 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq fuse libfuse2 fakeroot dpkg-dev rpm
 
+      - name: Build executable
+        run: python -m PyInstaller SoundVault.spec --noconfirm
+
       - name: Build .AppImage
         run: |
-          chmod +x scripts/build-linux.sh
-          bash scripts/build-linux.sh "${{ inputs.version }}"
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          APP_NAME_LOWER="soundvault"
+          SCRIPT_DIR="${{ github.workspace }}/scripts"
+          PROJECT_DIR="${{ github.workspace }}"
+          APPDIR="${SCRIPT_DIR}/AppDir"
+          APPRUN="${APPDIR}/AppRun"
+          DESKTOP_FILE="${APPDIR}/${APP_NAME}.desktop"
+
+          rm -rf "${APPDIR}"
+          mkdir -p "${APPDIR}/usr/bin"
+          mkdir -p "${APPDIR}/usr/share/applications"
+          mkdir -p "${APPDIR}/usr/share/icons/hicolor/128x128/apps"
+
+          cp "dist/${APP_NAME}" "${APPDIR}/usr/bin/"
+
+          cat > "${APPRUN}" << 'RUNEOF'
+          #!/usr/bin/env bash
+          HERE="$(dirname "$(readlink -f "$0")")"
+          exec "${HERE}/usr/bin/SoundVault" "$@"
+          RUNEOF
+          chmod +x "${APPRUN}"
+
+          cat > "${DESKTOP_FILE}" << DESKEOF
+          [Desktop Entry]
+          Name=SoundVault
+          Comment=SoundVault Audio Tag Library Manager
+          Exec=SoundVault
+          Icon=soundvault
+          Type=Application
+          Categories=Audio;Music;
+          DESKEOF
+
+          cp "${DESKTOP_FILE}" "${APPDIR}/"
+
+          echo "=== Downloading appimagetool ==="
+          APPIMAGETOOL="${SCRIPT_DIR}/appimagetool"
+          if ! command -v appimagetool &>/dev/null; then
+            ARCH=$(uname -m)
+            curl -L -o "${APPIMAGETOOL}" \
+              "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+            chmod +x "${APPIMAGETOOL}"
+            APPIMAGETOOL_CMD="${APPIMAGETOOL}"
+          else
+            APPIMAGETOOL_CMD="appimagetool"
+          fi
+
+          OUTPUT="${PROJECT_DIR}/dist/${APP_NAME}-${VERSION}.AppImage"
+          ARCH=$(uname -m) "${APPIMAGETOOL_CMD}" "${APPDIR}" "${OUTPUT}"
+          echo "Created ${OUTPUT}"
 
       - name: Build .deb
         run: |
-          chmod +x scripts/build-linux-deb.sh
-          bash scripts/build-linux-deb.sh "${{ inputs.version }}"
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          APP_NAME_LOWER="soundvault"
+          PROJECT_DIR="${{ github.workspace }}"
+          DIST_DIR="${PROJECT_DIR}/dist"
+          DEB_DIR="/tmp/${APP_NAME}_deb"
+          DEB_PKG_DIR="${DEB_DIR}/${APP_NAME_LOWER}_${VERSION}_amd64"
+          DEB_PATH="${DIST_DIR}/${APP_NAME_LOWER}_${VERSION}_amd64.deb"
+
+          rm -rf "$DEB_DIR"
+          mkdir -p "${DEB_PKG_DIR}/DEBIAN"
+          mkdir -p "${DEB_PKG_DIR}/usr/bin"
+          mkdir -p "${DEB_PKG_DIR}/usr/share/applications"
+          mkdir -p "${DEB_PKG_DIR}/usr/share/${APP_NAME_LOWER}"
+
+          cp "${DIST_DIR}/${APP_NAME}" "${DEB_PKG_DIR}/usr/share/${APP_NAME_LOWER}/"
+
+          cat > "${DEB_PKG_DIR}/usr/bin/${APP_NAME_LOWER}" << 'SCRIPT'
+          #!/bin/sh
+          exec /usr/share/soundvault/SoundVault "$@"
+          SCRIPT
+          chmod +x "${DEB_PKG_DIR}/usr/bin/${APP_NAME_LOWER}"
+
+          cat > "${DEB_PKG_DIR}/usr/share/applications/${APP_NAME_LOWER}.desktop" << DESKEOF
+          [Desktop Entry]
+          Name=SoundVault
+          Comment=SoundVault Audio Tag Library Manager
+          Exec=/usr/bin/soundvault
+          Icon=soundvault
+          Type=Application
+          Categories=Audio;Music;
+          DESKEOF
+
+          cat > "${DEB_PKG_DIR}/DEBIAN/control" << EOF
+          Package: ${APP_NAME_LOWER}
+          Version: ${VERSION}
+          Section: sound
+          Priority: optional
+          Architecture: amd64
+          Depends: libc6 (>= 2.17)
+          Recommends: python3 (>= 3.8)
+          Maintainer: SoundVault Team
+          Description: SoundVault Audio Tag Library Manager
+           SoundVault is a desktop application for managing audio file tags,
+           organizing music libraries, and creating episode playlists.
+          EOF
+
+          fakeroot dpkg-deb --build "${DEB_PKG_DIR}" "${DEB_PATH}"
+          rm -rf "$DEB_DIR"
+          echo "Created ${DEB_PATH}"
 
       - name: Build .rpm
         run: |
-          chmod +x scripts/build-linux-rpm.sh
-          bash scripts/build-linux-rpm.sh "${{ inputs.version }}"
+          VERSION="${{ inputs.version }}"
+          APP_NAME="SoundVault"
+          APP_NAME_LOWER="soundvault"
+          PROJECT_DIR="${{ github.workspace }}"
+          DIST_DIR="${PROJECT_DIR}/dist"
+          RPM_BUILD_DIR="/tmp/${APP_NAME}_rpm"
+          RPM_PATH="${DIST_DIR}/${APP_NAME_LOWER}-${VERSION}-1.x86_64.rpm"
+          BUILDROOT="${RPM_BUILD_DIR}/BUILDROOT/${APP_NAME_LOWER}-${VERSION}-1.x86_64"
+
+          rm -rf "$RPM_BUILD_DIR"
+          mkdir -p "${BUILDROOT}/usr/share/${APP_NAME_LOWER}"
+          mkdir -p "${BUILDROOT}/usr/bin"
+          mkdir -p "${BUILDROOT}/usr/share/applications"
+
+          cp "${DIST_DIR}/${APP_NAME}" "${BUILDROOT}/usr/share/${APP_NAME_LOWER}/"
+
+          cat > "${BUILDROOT}/usr/bin/${APP_NAME_LOWER}" << 'SCRIPT'
+          #!/bin/sh
+          exec /usr/share/soundvault/SoundVault "$@"
+          SCRIPT
+          chmod +x "${BUILDROOT}/usr/bin/${APP_NAME_LOWER}"
+
+          cat > "${BUILDROOT}/usr/share/applications/${APP_NAME_LOWER}.desktop" << DESKEOF
+          [Desktop Entry]
+          Name=SoundVault
+          Comment=SoundVault Audio Tag Library Manager
+          Exec=/usr/bin/soundvault
+          Icon=soundvault
+          Type=Application
+          Categories=Audio;Music;
+          DESKEOF
+
+          mkdir -p "${RPM_BUILD_DIR}/SPECS"
+          SPEC_FILE="${RPM_BUILD_DIR}/SPECS/${APP_NAME_LOWER}.spec"
+          cat > "$SPEC_FILE" << SPECEOF
+          Name: ${APP_NAME_LOWER}
+          Version: ${VERSION}
+          Release: 1
+          Summary: SoundVault Audio Tag Library Manager
+          License: MIT
+          URL: https://soundvault.app
+          Group: Applications/Multimedia
+          BuildArch: x86_64
+          AutoReqProv: no
+
+          %description
+          SoundVault is a desktop application for managing audio file tags,
+          organizing music libraries, and creating episode playlists.
+
+          %install
+          rm -rf %{buildroot}
+          cp -a "${BUILDROOT}"/* %{buildroot}
+
+          %files
+          /usr/share/${APP_NAME_LOWER}
+          /usr/bin/${APP_NAME_LOWER}
+          /usr/share/applications/${APP_NAME_LOWER}.desktop
+
+          %changelog
+          * $(date '+%a %b %d %Y') SoundVault Team - ${VERSION}-1
+          - Release v${VERSION}
+          SPECEOF
+
+          rpmbuild -bb \
+            --define "_topdir ${RPM_BUILD_DIR}" \
+            --define "_rpmdir ${DIST_DIR}" \
+            --define "_builddir ${RPM_BUILD_DIR}/BUILD" \
+            --define "_sourcedir ${RPM_BUILD_DIR}" \
+            --define "_specdir ${RPM_BUILD_DIR}/SPECS" \
+            --define "_buildrootdir ${RPM_BUILD_DIR}/BUILDROOT" \
+            "$SPEC_FILE"
+
+          rm -rf "$RPM_BUILD_DIR"
+
+          RPM_FINAL=$(ls "${DIST_DIR}"/*.rpm 2>/dev/null | grep -v debug | head -1)
+          if [[ -n "$RPM_FINAL" && "$RPM_FINAL" != "$RPM_PATH" ]]; then
+            mv "$RPM_FINAL" "$RPM_PATH"
+          fi
+          echo "Created ${RPM_PATH}"
 
       - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
@@ -197,9 +413,6 @@ jobs:
           merge-multiple: true
           path: dist/
 
-      - name: List artifacts
-        run: ls -la dist/
-
       - name: Upload to GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -207,7 +420,6 @@ jobs:
           VERSION="${{ inputs.version }}"
           REPO="${{ github.repository }}"
 
-          # Check if release exists, create if not (don't fail)
           if ! gh release view "v$VERSION" -R "$REPO" &>/dev/null; then
             echo "Release v$VERSION does not exist, creating..."
             gh release create "v$VERSION" \
